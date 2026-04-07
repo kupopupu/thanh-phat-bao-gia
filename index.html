@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh Phát – Báo Giá</title>
+
+    <!-- Favicons: light by default, swap to dark when prefers-color-scheme: dark -->
+    <link id="favicon" rel="icon" href="assets/image/Thanh-Phát-16.ico" type="image/x-icon">
+    <script>
+        (function(){
+            const light = 'assets/image/Thanh-Phát-16.ico';
+            const dark  = 'assets/image/Thanh-Phát-15.ico';
+            let link = document.getElementById('favicon');
+            if (!link) { link = document.createElement('link'); link.id = 'favicon'; link.rel = 'icon'; document.head.appendChild(link); }
+            function update() {
+                const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                link.href = isDark ? dark : light;
+            }
+            update();
+            if (window.matchMedia) {
+                const mq = window.matchMedia('(prefers-color-scheme: dark)');
+                if (mq.addEventListener) mq.addEventListener('change', update);
+                else if (mq.addListener) mq.addListener(update);
+            }
+        })();
+    </script>
+
+    <!-- Third-party libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.min.js"></script>
+Thanh Phát Webapp copy    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- Google Font: Be Vietnam Pro -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Application styles (load order matters) -->
+    <link rel="stylesheet" href="assets/css/base.css">
+    <link rel="stylesheet" href="assets/css/layout.css">
+    <link rel="stylesheet" href="assets/css/components.css">
+    <link rel="stylesheet" href="assets/css/table.css">
+    <link rel="stylesheet" href="assets/css/summary.css">
+    <link rel="stylesheet" href="assets/css/modal.css">
+    <link rel="stylesheet" href="assets/css/preview.css">
+    <link rel="stylesheet" href="assets/css/responsive.css">
+
+    <style>
+        /* ── Dashboard ─────────────────────────────────────── */
+        .dashboard-topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .dashboard-topbar h2 { margin:0; font-size:22px; font-weight:800; color:#0d5c92; }
+
+        .btn-new-quote {
+            background: linear-gradient(120deg,#1D75AE,#29a0d7);
+            color:#fff; border:none; border-radius:999px;
+            padding:12px 28px; font-size:15px; font-weight:700;
+            cursor:pointer; box-shadow:0 4px 14px rgba(29,117,174,.35);
+            transition:transform .15s,box-shadow .15s; font-family:inherit;
+        }
+        .btn-new-quote:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(29,117,174,.45); }
+
+        /* ── Stat cards ──────────────────────────────────── */
+        .stats-bar { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:20px; }
+        .stat-card {
+            background:#fff; border:1px solid #dde9f5; border-radius:12px;
+            padding:14px 18px; display:flex; flex-direction:column; gap:4px;
+            box-shadow:0 2px 8px rgba(0,0,0,.06);
+        }
+        .stat-card .stat-label { font-size:12px; color:#6b8cad; font-weight:500; }
+        .stat-card .stat-value { font-size:20px; font-weight:800; color:#0d5c92; }
+        .stat-card .stat-sub   { font-size:11px; color:#aaa; }
+        .stat-card.highlight   { border-color:#a0d4a0; background:linear-gradient(135deg,#f0faf0,#fff); }
+        .stat-card.highlight .stat-value { color:#1a7a35; }
+
+        /* ── Status badges ──────────────────────────────── */
+        .badge { display:inline-block; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:700; white-space:nowrap; }
+        .badge-pending    { background:#f0f0f0; color:#888; }
+        .badge-deposited  { background:#fff3cd; color:#b07800; }
+        .badge-no-deposit { background:#fde8e8; color:#c0392b; }
+        .badge-completed  { background:#d4edda; color:#1a7a35; }
+
+        /* ── List row action buttons ─────────────────────── */
+        .qlt-actions { display:flex; flex-wrap:nowrap; gap:3px; align-items:center; }
+        /* Nút cưởng độ: tất cả cùng khoảng rộng, không thầy đổi theo nội dung */
+        .qlt-actions button { box-sizing:border-box; text-align:center; white-space:nowrap; overflow:hidden; }
+        .qlt-btn-confirm  { background:#1D75AE; color:#fff; border:none; border-radius:6px; width:28px; height:28px; font-size:16px; cursor:pointer; font-family:inherit; font-weight:700; }
+        .qlt-btn-confirm:hover  { background:#155c8a; }
+        .qlt-btn-fullpaid { background:#1a7a35; color:#fff; border:none; border-radius:6px; width:28px; height:28px; font-size:15px; cursor:pointer; font-family:inherit; font-weight:700; }
+        .qlt-btn-fullpaid:hover { background:#14612b; }
+        .qlt-btn-recall   { background:#f39c12; color:#fff; border:none; border-radius:6px; width:28px; height:28px; font-size:16px; cursor:pointer; font-family:inherit; }
+        .qlt-btn-recall:hover   { background:#d68910; }
+        .qlt-btn-jpg      { background:#e67e22; color:#fff; border:none; border-radius:6px; width:28px; height:28px; font-size:9px; font-weight:700; cursor:pointer; font-family:inherit; letter-spacing:.5px; }
+        .qlt-btn-jpg:hover      { background:#cf6d17; }
+        .qlt-btn-preview  { background:#6c757d; color:#fff; border:none; border-radius:6px; width:28px; height:28px; font-size:14px; cursor:pointer; font-family:inherit; }
+        .qlt-btn-preview:hover  { background:#545b62; }
+        .qlt-btn-open     { background:#1D75AE; color:#fff; border:none; border-radius:6px; width:28px; height:28px; font-size:14px; cursor:pointer; font-family:inherit; }
+        .qlt-btn-open:hover     { background:#155c8a; }
+        .qlt-btn-open[disabled] { opacity:.45; cursor:default; }
+        .qlt-btn-del      { background:#c0392b; color:#fff; border:none; border-radius:6px; width:28px; height:28px; font-size:14px; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; padding:0; }
+        .qlt-btn-del svg  { width:14px; height:14px; display:block; }
+        .qlt-btn-del:hover { background:#b8322a; }
+        .qlt-btn-del[disabled] { opacity:.45; cursor:default; }
+        /* Phân trang danh sách báo giá */
+        .ql-pager { display:flex; align-items:center; gap:8px; padding:10px 4px 4px; flex-wrap:wrap; }
+        .ql-pg-btn { background:#1D75AE; color:#fff; border:none; border-radius:6px;
+                     width:30px; height:30px; font-size:14px; cursor:pointer; line-height:1; }
+        .ql-pg-btn:hover:not([disabled]) { background:#155c8a; }
+        .ql-pg-btn[disabled] { opacity:.35; cursor:default; }
+        .ql-pg-label { display:flex; align-items:center; gap:5px; font-size:14px; font-weight:600; color:#333; }
+        .ql-pg-input { width:46px; height:30px; border:1.5px solid #1D75AE; border-radius:6px;
+                       text-align:center; font-size:14px; font-weight:700; color:#1D75AE;
+                       outline:none; padding:0 2px; }
+        .ql-pg-input:focus { border-color:#155c8a; box-shadow:0 0 0 2px rgba(29,117,174,.2); }
+        /* hide number spinners */
+        .ql-pg-input::-webkit-outer-spin-button,
+        .ql-pg-input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+        .ql-pg-size { display:flex; align-items:center; gap:5px; font-size:13px; color:#555; }
+        .ql-pg-size input { width:46px; height:28px; border:1px solid #ccc; border-radius:6px;
+                            text-align:center; font-size:13px; outline:none; padding:0 2px; }
+        .ql-pg-size input:focus { border-color:#1D75AE; }
+        .ql-pg-size input::-webkit-outer-spin-button,
+        .ql-pg-size input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+        .ql-pg-sep { flex:1; }
+        .ql-pg-info { font-size:12px; color:#999; white-space:nowrap; }
+
+        /* ── Customer Autocomplete Dropdown ──────────────────────────────── */
+        .cust-dropdown { display:none; position:fixed; z-index:9999; background:#fff;
+                         border:1.5px solid #b8d4ee; border-radius:10px;
+                         box-shadow:0 6px 20px rgba(0,0,0,.13);
+                         max-height:220px; overflow-y:auto; min-width:260px; }
+        .cust-drop-item { padding:10px 14px; cursor:pointer; font-size:13px;
+                          border-bottom:1px solid #f0f0f0; transition:background .1s; }
+        .cust-drop-item:last-child { border-bottom:none; }
+        .cust-drop-item:hover { background:#f0f7ff; }
+        .cust-drop-name  { font-weight:700; color:#0d5c92; }
+        .cust-drop-phone { font-size:12px; color:#6b8cad; margin-left:8px; }
+        .cust-drop-addr  { font-size:11px; color:#aaa; margin-top:2px; }
+
+        /* ── Confirm order mini-modal ────────────────────── */
+        #confirmOrderModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.55); z-index:5000; align-items:center; justify-content:center; }
+        #confirmOrderModal.show { display:flex; }
+        .com-box { background:#fff; border-radius:16px; padding:28px 32px; max-width:380px; width:90%; text-align:center; box-shadow:0 12px 40px rgba(0,0,0,.3); }
+        .com-box h4 { margin:0 0 6px; font-size:20px; color:#0d5c92; }
+        .com-box .com-quote-no { font-size:13px; color:#888; margin-bottom:10px; }
+        .com-box .com-total    { font-size:15px; font-weight:700; color:#1D75AE; margin-bottom:20px; }
+        .com-btns { display:flex; gap:12px; justify-content:center; margin-bottom:14px; }
+        .com-btn-deposit    { background:#1a7a35; color:#fff; border:none; border-radius:10px; padding:12px 24px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; }
+        .com-btn-deposit:hover { background:#14612b; }
+        .com-btn-nodeposit  { background:#fff0f0; color:#c0392b; border:1px solid #f5c6cb; border-radius:10px; padding:12px 24px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; }
+        .com-btn-nodeposit:hover { background:#fde8e8; }
+        .com-cancel { background:none; border:none; color:#aaa; font-size:13px; cursor:pointer; font-family:inherit; }
+
+        /* ── Search / list ───────────────────────────────── */
+        .main-search-bar { display:flex; gap:10px; align-items:center; margin-bottom:14px; }
+        .main-search-bar input {
+            flex:1; padding:10px 16px; border-radius:999px;
+            border:1px solid #c8d8e8; font-size:13px; font-family:inherit; background:#fff;
+        }
+
+        .quote-list-table { width:100%; border-collapse:collapse; font-size:13px; }
+        .quote-list-table thead tr { background:#1D75AE; color:#fff; }
+        .quote-list-table th { padding:11px 12px; text-align:left; font-weight:600; font-size:12px; }
+        .quote-list-table td { padding:8px 12px; border-bottom:1px solid #f0f0f0; vertical-align:middle; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .quote-list-table tbody tr:hover { background:#f0f7ff; }
+        .quote-list-table tbody tr:last-child td { border-bottom:none; }
+
+        /* ── Quote form modal (overlay) ──────── */
+        #quoteFormModal {
+            display:none; position:fixed; top:0; left:0;
+            width:100%; height:100%; background:rgba(10,30,50,.88);
+            z-index:2000; overflow:hidden; /* Không cuộn toàn trang */
+        }
+        #quoteFormModal .qfm-inner { 
+            background:#f4f8fc; width:calc(100vw - 24px); max-width:1800px; margin:2vh auto; 
+            border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,0.4);
+            display:flex; flex-direction:column; height:96vh;
+        }
+        #quoteFormModal .qfm-header {
+            position:relative; z-index:2100;
+            background:#1D75AE; color:#fff; flex-shrink:0;
+            padding:12px 24px; display:flex; justify-content:space-between; align-items:center; gap:12px;
+            box-shadow:0 2px 8px rgba(0,0,0,.15);
+        }
+        #quoteFormModal .qfm-header h3 { margin:0; font-size:18px; font-weight:800; }
+        #quoteFormModal .qfm-header-actions { display:flex; gap:8px; align-items:center; }
+        #quoteFormModal .qfm-close {
+            background:rgba(255,255,255,.18); border:none; color:#fff;
+            font-size:15px; font-weight:700; border-radius:8px; padding:6px 14px;
+            cursor:pointer; font-family:inherit;
+        }
+        #quoteFormModal .qfm-close:hover { background:rgba(255,255,255,.3); }
+        #quoteFormModal .qfm-body { 
+            padding:20px 24px; flex:1; background:#f4f8fc; overflow-y:auto; 
+        }
+
+        /* ── Action Buttons ── */
+        .qfm-action-buttons {
+            display:flex; justify-content:flex-end; gap:12px; flex-shrink:0;
+            padding:16px 24px; border-top:1px solid #dce6f2; background:#fff;
+            border-radius: 0 0 12px 12px; box-shadow: 0 -4px 12px rgba(0,0,0,0.02);
+        }
+        .qfm-action-buttons .btn {
+            padding:12px 24px; font-size:14px; font-weight:700; border-radius:30px;
+            box-shadow:0 6px 16px rgba(0,0,0,0.1); transition:transform 0.15s,box-shadow 0.15s;
+        }
+        .qfm-action-buttons .btn:hover {
+            transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        /* ── Compact sidebar ─────────────────────────────── */
+        .sidebar-compact-inner { display:flex; flex-direction:column; gap:2px; }
+        .sidebar-compact-inner hr { border:none; border-top:1px solid #e2ecf5; margin:8px 0; }
+        .sb-item {
+            display:block; width:100%; text-align:left;
+            background:none; border:none; border-radius:8px;
+            padding:9px 12px; font-size:13px; font-weight:500; color:#2c4a66;
+            cursor:pointer; font-family:inherit; transition:background .12s; line-height:1.3;
+        }
+        .sb-item:hover { background:#e8f3fb; color:#1D75AE; }
+        .sb-item.danger { color:#c0392b; }
+        .sb-item.danger:hover { background:#fde8e8; }
+        .sb-section-label {
+            font-size:10px; font-weight:700; text-transform:uppercase;
+            letter-spacing:.5px; color:#9ab3cc; padding:8px 12px 4px;
+        }
+        #quoteListEmptyState { text-align:center; padding:60px 20px; color:#aaa; }
+        #quoteListEmptyState .empty-icon { font-size:48px; margin-bottom:12px; }
+
+        /* ── Customer Page ─────────────────────────────────────── */
+        .cp-topbar { display:flex; align-items:center; gap:14px; margin-bottom:16px;
+                     padding:16px 20px; background:#fff;
+                     border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.07); flex-wrap:wrap; }
+        .cp-back-btn { background:#1D75AE; color:#fff; border:none; border-radius:8px;
+                       padding:8px 18px; font-size:14px; font-weight:700;
+                       cursor:pointer; font-family:inherit; transition:background .12s; }
+        .cp-back-btn:hover { background:#155c8a; }
+        .cp-title { margin:0; font-size:20px; font-weight:800; color:#0d5c92; flex:1; }
+        .cp-count { font-size:13px; color:#888; white-space:nowrap; }
+        .cp-search-bar { margin-bottom:14px; }
+        .cp-search-bar input { width:100%; box-sizing:border-box; padding:10px 16px;
+                               border-radius:999px; border:1px solid #c8d8e8;
+                               font-size:13px; font-family:inherit; background:#fff; }
+        .cp-table { width:100%; border-collapse:collapse; font-size:13px; min-width:900px; table-layout:fixed; }
+        .cp-table thead tr { background:#1D75AE; color:#fff; }
+        .cp-table th { padding:11px 14px; font-weight:600; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .cp-table td { padding:10px 14px; border-bottom:1px solid #f0f0f0; vertical-align:middle; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .cp-table tbody tr:hover { background:#f0f7ff; }
+        .cp-table tbody tr:last-child td { border-bottom:none; }
+        .cp-pt-total  { color:#8e44ad; font-weight:700; }
+        .cp-pt-used   { color:#e67e22; }
+        .cp-pt-remain { color:#1a7a35; font-weight:700; }
+        .cp-debt      { color:#c0392b; font-weight:700; }
+        .cp-total     { color:#0d5c92; font-weight:700; }
+    </style>
+</head>
+<body>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         HEADER
+    ═══════════════════════════════════════════════════════════════ -->
+    <div class="header">
+        <div class="header-inner">
+            <div class="logo-section">
+                <img src="assets/image/Thanh Phát Trắng.png" alt="Thanh Phát" style="height:40px;object-fit:contain;display:block;">
+            </div>
+            <div class="company-info">
+                <h2>THÔNG TIN CÔNG TY</h2>
+                <p><strong>Địa chỉ:</strong> 114/12 hẻm Quản Cơ Thành, K. Bình Thới 2, P. Bình Đức, An Giang</p>
+                <p><strong>ĐT:</strong> 0966 767 731 | <strong>Email:</strong> thanhhien.po24@gmail.com</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         PAGE ROW  (compact sidebar  |  dashboard)
+    ══════════════════════════════════════════════════════════════ -->
+    <div class="page-row">
+
+        <!-- ── COMPACT SIDEBAR ── -->
+        <div id="menuInline">
+            <div class="sidebar-compact-inner">
+
+                <div class="sb-section-label">Báo cáo</div>
+                <button class="sb-item" onclick="showCustomerList()">👥 Khách hàng</button>
+                <button class="sb-item" onclick="showTotalRevenue()">💵 Tổng doanh thu</button>
+                <button class="sb-item" onclick="showMonthlyRevenue()">📅 Thống kê tháng</button>
+                <button class="sb-item" onclick="showAnnualStatistics()">📈 Thống kê năm</button>
+
+            </div>
+        </div><!-- /#menuInline -->
+
+        <!-- ── MAIN: DASHBOARD ── -->
+        <div class="container">
+            <div class="main-content">
+
+                <!-- Top bar -->
+                <div class="dashboard-topbar">
+                    <h2>📋 Danh sách Báo Giá</h2>
+                    <button class="btn-new-quote" onclick="openNewQuoteModal()">＋ Báo giá mới</button>
+                </div>
+
+                <!-- Stats -->
+                <div class="stats-bar">
+                    <div class="stat-card">
+                        <div class="stat-label">Tổng báo giá</div>
+                        <div class="stat-value" id="statTotalCount">0</div>
+                        <div class="stat-sub">đã lưu</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Khách hàng</div>
+                        <div class="stat-value" id="statCustomerCount">0</div>
+                        <div class="stat-sub">đã lưu</div>
+                    </div>
+                    <div class="stat-card highlight">
+                        <div class="stat-label">Tổng đã nhận</div>
+                        <div class="stat-value" id="statReceivedAmount">0đ</div>
+                        <div class="stat-sub">cọ + thu đủ</div>
+                    </div>
+                    <div class="stat-card" style="border-color:#f5c6cb;">
+                        <div class="stat-label">Tổng nợ</div>
+                        <div class="stat-value" id="statTotalDebt" style="color:#c0392b;">0đ</div>
+                        <div class="stat-sub">chưa thu</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Tổng doanh thu</div>
+                        <div class="stat-value" id="statTotalRevenue">0đ</div>
+                        <div class="stat-sub">đã xác nhận</div>
+                    </div>
+                </div>
+
+                <!-- Search -->
+                <div class="main-search-bar">
+                    <input id="mainQuoteSearch" type="text"
+                        placeholder="🔍 Tìm theo mã báo giá, tên khách hàng, số điện thoại…"
+                        oninput="renderQuoteList(this.value)">
+                </div>
+
+                <!-- Quote list (inline) -->
+                <div id="quoteListContainer">
+                    <!-- populated by renderQuoteList() -->
+                </div>
+
+            </div>
+
+            <!-- ══ CUSTOMER PAGE (toggle with main-content) ══ -->
+            <div id="customerPage" style="display:none;">
+                <div class="cp-topbar">
+                    <button class="cp-back-btn" onclick="showDashboard()">&#8592; Quay lại</button>
+                    <h2 class="cp-title">👥 Danh sách Khách Hàng</h2>
+                    <span id="cpCustomerCount" class="cp-count"></span>
+                </div>
+                <div class="cp-search-bar">
+                    <input id="cpSearch" type="text"
+                        placeholder="🔍 Tìm theo tên hoặc số điện thoại…"
+                        oninput="renderCustomerPage(this.value)">
+                </div>
+                <div id="customerPageContent" style="overflow-x:auto;">
+                    <!-- populated by renderCustomerPage() -->
+                </div>
+            </div>
+
+        </div><!-- /.container -->
+    </div><!-- /.page-row -->
+
+
+    <!-- ══════════════════════════════════════════════════════════════
+         QUOTE FORM MODAL  (full-screen overlay, z-index 2000)
+    ══════════════════════════════════════════════════════════════ -->
+    <div id="quoteFormModal">
+        <div class="qfm-inner">
+
+            <!-- Sticky modal header -->
+            <div class="qfm-header">
+                <h3 id="quoteFormModalTitle">📝 Báo giá mới</h3>
+                <div class="qfm-header-actions">
+                    <div id="currentQuoteDisplay" style="font-size:13px;font-weight:600;color:rgba(255,255,255,.85);">&nbsp;</div>
+                    <button class="qfm-close" onclick="closeQuoteFormModal()">← Quay lại</button>
+                </div>
+            </div>
+
+            <!-- Form body -->
+            <div class="qfm-body">
+
+                <!-- CUSTOMER INFO -->
+                <div class="section customer-section">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+                        <h3 style="margin:0;">▣ THÔNG TIN KHÁCH HÀNG</h3>
+                        <div style="display:flex;gap:8px;align-items:center;margin-left:auto;">
+                            <input type="tel" id="customerPhoneSearch" placeholder="Tìm SĐT khách"
+                                style="padding:8px 16px;font-size:13px;border-radius:24px;border:1px solid #c8d8e8;background:#f9fcff;width:180px;">
+                            <button class="btn btn-primary" onclick="searchCustomerByPhone()"
+                                style="padding:8px 20px;font-size:13px;border-radius:24px;font-weight:600;">Tìm</button>
+                            <button class="btn" onclick="clearCustomerFields()"
+                                style="padding:8px 16px;font-size:13px;background:#f8f9fa;border:1px solid #dce6f2;border-radius:24px;color:#5a7691;font-weight:600;">Clear</button>
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="customerCode" value="">
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px;">
+                        <div style="display:flex;flex-direction:column;position:relative;">
+                            <label for="customerName" style="font-size:13px;font-weight:600;margin-bottom:6px;color:#3b5c7e;">Tên khách hàng <span style="color:#d9534f">*</span></label>
+                            <input type="text" id="customerName" placeholder="Nhập tên khách hàng" autocomplete="off"
+                                oninput="showCustDropdown('name', this.value)"
+                                onblur="hideCustDropdownDelayed()"
+                                style="padding:10px 16px;font-size:14px;border-radius:8px;border:1px solid #c8d8e8;background:#fff;box-sizing:border-box;">
+                        </div>
+                        <div style="display:flex;flex-direction:column;position:relative;">
+                            <label for="customerPhone" style="font-size:13px;font-weight:600;margin-bottom:6px;color:#3b5c7e;">Số điện thoại <span style="color:#d9534f">*</span></label>
+                            <input type="tel" id="customerPhone" placeholder="Nhập số điện thoại" autocomplete="off"
+                                oninput="showCustDropdown('phone', this.value)"
+                                onblur="hideCustDropdownDelayed()"
+                                style="padding:10px 16px;font-size:14px;border-radius:8px;border:1px solid #c8d8e8;background:#fff;box-sizing:border-box;">
+                        </div>
+                    </div>
+
+                    <!-- Customer autocomplete dropdown -->
+                    <div id="custDropdown" class="cust-dropdown"></div>
+
+                    <div>
+                        <label for="customerAddress" style="font-size:13px;font-weight:600;margin-bottom:6px;color:#3b5c7e;display:block;">Địa chỉ</label>
+                        <input type="text" id="customerAddress" placeholder="Nhập địa chỉ khách hàng"
+                            style="padding:10px 16px;font-size:14px;border-radius:8px;border:1px solid #c8d8e8;background:#fff;width:100%;box-sizing:border-box;">
+                    </div>
+                </div>
+
+                <!-- ITEMS + SUMMARY -->
+                <div class="main-layout">
+
+                    <!-- Items table -->
+                    <div class="section" style="padding:20px 24px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                            <h3 style="margin:0;">▣ CHI TIẾT HÀNG HÓA</h3>
+                            <div style="display:none;">
+                                <button id="quoteTypeCup" class="quote-type-btn active" onclick="selectQuoteType('cup')">In ly</button>
+                                <button id="quoteTypeOther" class="quote-type-btn" onclick="selectQuoteType('other')">In khác</button>
+                            </div>
+                        </div>
+
+                        <div style="overflow-x: auto; width: 100%; margin-bottom: 12px; border-radius: 8px; border: 1px solid #dce6f2;">
+                            <table class="items-table" id="itemsTable" style="margin: 0; min-width: 700px; width: 100%; border: none;">
+                                <thead>
+                                    <tr>
+                                        <th style="width:44px;">STT</th>
+                                        <th>Tên hàng hóa</th>
+                                        <th style="width:15px;">ĐVT</th>
+                                        <th style="width:15px;">SL</th>
+                                        <th style="width:120px;">Đơn giá</th>
+                                        <th style="width:120px;">Chiết khấu</th>
+                                        <th style="width:140px;">Thành tiền</th>
+                                        <th style="width:48px;text-align:center;">Xóa</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsBody">
+                                    <tr>
+                                        <td>1</td>
+                                        <td class="product-name-cell"><input type="text" placeholder="Ly giấy 12oz, Ly nhựa PP 16oz..." onchange="updateRowTotal(this)"></td>
+                                        <td class="unit-cell"><input type="text" placeholder="Thùng" onchange="updateRowTotal(this); handleUnitChange(this)"></td>
+                                        <td><input type="number" placeholder="1" min="0" step="0.01" onchange="updateRowTotal(this)"></td>
+                                        <td class="price-cell"></td>
+                                        <td class="discount-cell"></td>
+                                        <td class="row-total">0đ</td>
+                                        <td style="text-align:center;"><button class="remove-btn" onclick="removeRow(this)" disabled>Xóa</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <button class="add-row-btn" onclick="addRow()">+ Thêm hàng</button>
+                    </div>
+
+                    <!-- Summary panel -->
+                    <div class="summary">
+                        <h3>■ TỔNG KẾT</h3>
+                        <div class="summary-row"><span>Tổng tiền hàng:</span><span id="subtotal">0 VNĐ</span></div>
+                        <div class="summary-row"><span>Chiết khấu chi tiết:</span><span id="discountDisplay" style="color:#e67e22;font-weight:700;">0 VNĐ</span></div>
+                        <div class="summary-row">
+                            <span>Thuế VAT (%):</span>
+                            <input type="number" id="vat" class="summary-input" placeholder="10" min="0" max="100" step="0.01" onchange="updateSummary()">
+                        </div>
+                        <div class="summary-row"><span>TỔNG THANH TOÁN:</span><span id="total">0 VNĐ</span></div>
+                        <div class="summary-row" style="border-top:2px solid #1D75AE;margin-top:15px;padding-top:15px;align-items:center;display:flex;gap:12px;">
+                            <div style="flex:1;display:flex;align-items:center;gap:12px;">
+                                <span>Tiền cọc (40%):</span>
+                                <span id="deposit">0 VNĐ</span>
+                            </div>
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+                                <label class="switch">
+                                    <input type="checkbox" id="depositToggle" onchange="toggleDepositDisabled(this.checked)">
+                                    <span class="slider"></span>
+                                </label>
+                                <span style="font-size:12px;white-space:nowrap;">Không cọc</span>
+                            </div>
+                        </div>
+                        <div class="summary-row"><span>Còn lại (60%):</span><span id="remaining">0 VNĐ</span></div>
+                    </div>
+
+                </div><!-- /.main-layout -->
+
+            </div><!-- /.qfm-body -->
+
+            <!-- ACTION BUTTONS -->
+            <div class="qfm-action-buttons">
+                <button class="btn btn-primary" onclick="previewQuote()">◉ Xem trước báo giá</button>
+                <button class="btn btn-success" onclick="exportQuoteAsJPG()">🖼 Xuất JPG báo giá</button>
+                <button id="finalizeQuoteBtn" class="btn btn-success" onclick="finalizeQuoteNumber()">✅ Xác nhận đã xong BG</button>
+            </div>
+
+        </div><!-- /.qfm-inner -->
+    </div><!-- /#quoteFormModal -->
+
+
+    <!-- ══════════════════════════════════════════════════════════════
+         PREVIEW / EXPORT MODALS  (z-index 3000, above form modal)
+    ══════════════════════════════════════════════════════════════ -->
+
+    <!-- Preview: báo giá -->
+    <div id="previewModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:3000;overflow-y:auto;">
+        <div style="background:#fff;margin:10px auto;width:calc(100vw - 40px);height:calc(100vh - 40px);max-width:1800px;border-radius:8px;position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.35);">
+            <div style="position:sticky;top:0;background:#1D75AE;color:#fff;padding:10px 15px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center;z-index:3001;">
+                <h3 style="margin:0;font-size:16px;">Xem trước báo giá</h3>
+                <button onclick="closePreview()" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;">×</button>
+            </div>
+            <div id="previewContent" style="padding:8px;height:calc(100% - 80px);overflow:hidden;box-sizing:border-box;display:flex;align-items:center;justify-content:center;"></div>
+            <div style="padding:10px 15px;border-top:1px solid #eee;text-align:center;background:#f8f9fa;border-radius:0 0 8px 8px;">
+                <button class="btn btn-primary" onclick="exportToPDF(); closePreview();" style="margin-right:8px;padding:8px 16px;font-size:14px;">📄 Xuất PDF</button>
+                <button class="btn" onclick="closePreview()" style="background:#6c757d;color:#fff;padding:8px 16px;font-size:14px;">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview: phiếu giao hàng -->
+    <div id="deliveryPreviewModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:3000;overflow-y:auto;">
+        <div style="background:#fff;margin:10px auto;width:calc(100vw - 40px);height:calc(100vh - 40px);max-width:2000px;border-radius:8px;position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.35);">
+            <div style="position:sticky;top:0;background:#1D75AE;color:#fff;padding:10px 15px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center;z-index:3001;">
+                <h3 style="margin:0;font-size:16px;">Xem trước phiếu giao hàng</h3>
+                <button onclick="closeDeliveryPreview()" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;">×</button>
+            </div>
+            <div id="deliveryPreviewContent" style="padding:8px;height:calc(100% - 80px);overflow:hidden;box-sizing:border-box;display:flex;align-items:center;justify-content:center;"></div>
+            <div style="padding:10px 15px;border-top:1px solid #eee;text-align:center;background:#f8f9fa;border-radius:0 0 8px 8px;">
+                <button class="btn btn-success" onclick="exportDeliveryNote(); closeDeliveryPreview();" style="margin-right:8px;padding:8px 16px;font-size:14px;">🚚 Xuất PDF</button>
+                <button class="btn" onclick="closeDeliveryPreview()" style="background:#6c757d;color:#fff;padding:8px 16px;font-size:14px;">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview: chốt file -->
+    <div id="finalizePreviewModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:3000;overflow-y:auto;">
+        <div style="background:#fff;margin:10px auto;width:calc(100vw - 40px);height:calc(100vh - 40px);max-width:1600px;border-radius:8px;position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.35);">
+            <div style="position:sticky;top:0;background:#1D75AE;color:#fff;padding:10px 15px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center;z-index:3001;">
+                <h3 style="margin:0;font-size:16px;">✅ Xem trước chốt file với khách hàng</h3>
+                <button onclick="closeFinalizePreview()" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;">×</button>
+            </div>
+            <div id="finalizePreviewContent" style="padding:8px;height:calc(100% - 120px);overflow:hidden;box-sizing:border-box;display:flex;align-items:center;justify-content:center;"></div>
+            <div style="padding:10px 15px;border-top:1px solid #eee;text-align:center;background:#f8f9fa;border-radius:0 0 8px 8px;">
+                <button class="btn btn-success" onclick="confirmFinalizeQuote(); closeFinalizePreview();" style="margin-right:8px;padding:8px 16px;font-size:14px;">✅ Xác nhận chốt file</button>
+                <button class="btn" onclick="closeFinalizePreview()" style="background:#6c757d;color:#fff;padding:8px 16px;font-size:14px;">Hủy</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: thông tin in ấn / hình ảnh -->
+    <div id="printInfoModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:3000;overflow-y:auto;">
+        <div style="background:#fff;margin:20px auto;width:min(560px,calc(100vw - 40px));border-radius:8px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.35);display:flex;flex-direction:column;">
+            <div style="background:#1D75AE;color:#fff;padding:15px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center;">
+                <h3 style="margin:0;font-size:16px;">Thông tin in ấn</h3>
+                <button onclick="closePrintInfoModal()" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;">×</button>
+            </div>
+            <div style="padding:20px;box-sizing:border-box;overflow-y:auto;max-height:calc(100vh - 160px);">
+                <div id="printInfoModalInner" style="width:100%;box-sizing:border-box;">
+                    <div style="display:grid;grid-template-columns:1fr 100px;gap:12px;margin-bottom:16px;">
+                        <div>
+                            <label style="display:block;margin-bottom:6px;font-weight:600;color:#1D75AE;font-size:13px;">Màu in:</label>
+                            <input type="text" id="printColor" placeholder="VD: đen, CMYK, xanh đỏ..."
+                                style="width:100%;padding:10px 12px;border:1px solid #dee2e6;border-radius:6px;font-size:14px;font-family:inherit;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label style="display:block;margin-bottom:6px;font-weight:600;color:#1D75AE;font-size:13px;">Số màu:</label>
+                            <input type="number" id="colorCount" value="1" min="1" max="10"
+                                style="width:100%;padding:10px 12px;border:1px solid #dee2e6;border-radius:6px;font-size:14px;text-align:center;font-family:inherit;box-sizing:border-box;">
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                            <label style="font-weight:600;color:#1D75AE;font-size:13px;">Danh sách sản phẩm in:</label>
+                            <button onclick="addCupRow()" style="background:#28a745;color:#fff;border:none;padding:6px 14px;border-radius:15px;font-size:12px;cursor:pointer;font-family:inherit;">+ Thêm dòng</button>
+                        </div>
+                        <div style="border:1px solid #dee2e6;border-radius:8px;overflow:hidden;">
+                            <div style="background:#f8f9fa;padding:10px 12px;border-bottom:1px solid #dee2e6;font-size:12px;font-weight:600;color:#1D75AE;display:grid;grid-template-columns:2fr 1fr 40px;gap:8px;">
+                                <span>Tên sản phẩm</span><span>Số lượng</span><span></span>
+                            </div>
+                            <div id="cupRowsContainer" style="max-height:220px;overflow-y:auto;padding:8px;"></div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+                        <button id="designUploadBtn" onclick="proceedToImageUpload('design')"
+                            style="flex:1;background:#1D75AE;color:#fff;border:none;padding:10px 16px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">📎 Chọn file thiết kế</button>
+                        <button id="mockupUploadBtn" onclick="proceedToImageUpload('mockup')"
+                            style="flex:1;background:#28a745;color:#fff;border:none;padding:10px 16px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">📎 Chọn file mockup</button>
+                    </div>
+                </div>
+            </div>
+            <div style="padding:12px 20px;border-top:1px solid #e0e0e0;text-align:center;background:#f8f9fa;border-radius:0 0 8px 8px;">
+                <button onclick="closePrintInfoModal()" style="background:#6c757d;color:#fff;border:none;padding:10px 28px;border-radius:20px;font-size:14px;cursor:pointer;font-family:inherit;">Hoàn tất</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden file inputs -->
+    <input type="file" id="imageUpload"  accept="image/*"    style="display:none;" onchange="handleImageUpload(event)">
+    <input type="file" id="productXlsx" accept=".xlsx,.xls" style="display:none;" onchange="handleProductXlsx(event)">
+
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         SCRIPTS  (load order: utils → state → storage → product →
+                   quote → templates → preview → export → ui → app)
+    ═══════════════════════════════════════════════════════════════ -->
+    <script src="assets/js/utils/format.js"></script>
+    <script src="assets/js/utils/dom.js"></script>
+    <script src="assets/js/utils/helpers.js"></script>
+    <script src="assets/js/state.js"></script>
+    <script src="assets/js/storage/storage.js"></script>
+    <script src="assets/js/product/product-import.js"></script>
+    <script src="assets/js/product/product-select.js"></script>
+    <script src="assets/js/quote/quote-table.js"></script>
+    <script src="assets/js/quote/quote-summary.js"></script>
+    <script src="assets/js/quote/quote-type.js"></script>
+    <script src="assets/js/quote/quote-core.js"></script>
+    <script src="assets/js/templates/template-quote.js"></script>
+    <script src="assets/js/templates/template-delivery.js"></script>
+    <script src="assets/js/templates/template-finalize.js"></script>
+    <script src="assets/js/preview/preview.js"></script>
+    <script src="assets/js/export/export-pdf.js"></script>
+    <script src="assets/js/export/export-jpg.js"></script>
+    <script src="assets/js/ui/notification.js"></script>
+    <script src="assets/js/ui/dropdown.js"></script>
+    <script src="assets/js/ui/customer.js"></script>
+    <script src="assets/js/ui/menu.js"></script>
+    <script src="assets/js/ui/modal.js"></script>
+    <script src="assets/js/ui/image.js"></script>
+    <script src="assets/js/app.js"></script>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         CONFIRM ORDER MINI-MODAL  (z-index 5000)
+    ══════════════════════════════════════════════════════════════ -->
+    <div id="confirmOrderModal">
+        <div class="com-box">
+            <h4>📦 Xác nhận đơn hàng</h4>
+            <div class="com-quote-no" id="comQuoteNo"></div>
+            <div class="com-total" id="comTotal"></div>
+            <p style="font-size:13px;color:#555;margin:0 0 18px;">Khách hàng đã thanh toán cọc chưa?</p>
+            <div class="com-btns">
+                <button class="com-btn-deposit"   onclick="confirmOrderWithDeposit(window._confirmOrderId, true)">💰 Đã cọc (40%)</button>
+                <button class="com-btn-nodeposit" onclick="confirmOrderWithDeposit(window._confirmOrderId, false)">❌ Chưa cọc</button>
+            </div>
+            <button class="com-cancel" onclick="document.getElementById('confirmOrderModal').classList.remove('show')">Hủy</button>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,15 @@
+/* =====================================================
+   PREVIEW.CSS  –  A4 preview scaling inside modals
+   ===================================================== */
+
+/* Wrapper that is sized to the scaled footprint */
+.preview-scale {
+    display: inline-block;
+    overflow: visible;
+}
+
+/* The actual A4 page content – transform applied by JS */
+.preview-inner {
+    display: block;
+    transform-origin: top left;
+}

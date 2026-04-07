@@ -1,0 +1,16 @@
+{
+  "name": "thanh-phat-bao-gia",
+  "version": "1.0.0",
+  "description": "Phần mềm quản lý báo giá in ấn – Thanh Phát",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "pg": "^8.11.3"
+  },
+  "scripts": {
+    "migrate": "node scripts/migrate.js",
+    "dev": "vercel dev"
+  }
+}

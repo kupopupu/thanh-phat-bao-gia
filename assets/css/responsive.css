@@ -1,0 +1,84 @@
+/* =============================================
+   RESPONSIVE.CSS  –  Media query breakpoints
+   ============================================= */
+
+@media (max-width: 1200px) {
+    .page-row {
+        grid-template-columns: 1fr !important;
+    }
+
+    #menuInline {
+        position: static !important;
+    }
+
+    #menuInline > div {
+        max-height: none !important;
+    }
+
+    .main-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    .header .header-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 14px;
+    }
+
+    .company-info {
+        text-align: left;
+    }
+
+    .company-info h2 {
+        font-size: 20px;
+    }
+
+    .company-info p {
+        font-size: 12px;
+    }
+
+    .main-content {
+        padding: 12px;
+    }
+
+    .section {
+        padding: 12px;
+    }
+
+    .items-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .items-table th,
+    .items-table td {
+        font-size: 11px;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .btn,
+    .dropdown-container {
+        width: 100%;
+    }
+
+    .dropdown-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .dropdown-menu {
+        left: 0;
+        right: 0;
+        min-width: 100%;
+    }
+}

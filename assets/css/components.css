@@ -1,0 +1,218 @@
+/* =====================================================
+   COMPONENTS.CSS  –  Buttons, Inputs, Dropdowns, Toggle
+   ===================================================== */
+
+/* ---- Generic inputs & selects ---- */
+input[type="text"],
+input[type="tel"],
+input[type="number"],
+select {
+    border: 1px solid #c8d8e8 !important;
+    border-radius: 10px !important;
+    background: #fff !important;
+    color: var(--ink);
+    padding: 9px 11px !important;
+    font-size: 13px !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input:focus,
+select:focus {
+    outline: none;
+    border-color: #5ea5d8 !important;
+    box-shadow: 0 0 0 3px rgba(46, 135, 196, 0.15);
+}
+
+/* ---- Buttons ---- */
+.btn {
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(16, 42, 67, 0.18);
+}
+
+.btn-primary {
+    color: #fff;
+    background: linear-gradient(120deg, var(--primary), #2d90cf);
+}
+
+.btn-success {
+    color: #fff;
+    background: linear-gradient(120deg, #1a8f5f, #2bad79);
+}
+
+#finalizeQuoteBtn {
+    background: linear-gradient(120deg, #1a8f5f, #2bad79) !important;
+    color: #fff !important;
+    border: none !important;
+}
+
+#quoteListBtn {
+    background: #f1f8ff !important;
+    color: #145c91 !important;
+    border: 1px solid #bfd8ee !important;
+}
+
+#finalizeQuoteBtn,
+#quoteListBtn {
+    margin-left: 8px;
+}
+
+/* ---- Action buttons bar ---- */
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-start;
+}
+
+/* ---- Quote type toggle buttons ---- */
+.quote-type-btn {
+    border-radius: 999px !important;
+    border: 1px solid #a6cae5 !important;
+    padding: 7px 13px !important;
+    font-size: 12px !important;
+}
+
+.quote-type-btn.active {
+    background: linear-gradient(120deg, var(--primary), #2d90cf) !important;
+    color: #fff !important;
+    border-color: transparent !important;
+}
+
+/* ---- Dropdown ---- */
+.dropdown-container {
+    position: relative;
+}
+
+.dropdown-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dropdown-menu {
+    position: absolute;
+    left: 0;
+    bottom: calc(100% + 8px);
+    min-width: 250px;
+    border: 1px solid #c9dced;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: var(--shadow-md);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    transition: 0.18s ease;
+    overflow: hidden;
+    z-index: 1005;
+}
+
+.dropdown-menu.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-header {
+    padding: 8px 12px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #4b6887;
+    background: #f6fafe;
+}
+
+.dropdown-item {
+    width: 100%;
+    text-align: left;
+    padding: 10px 12px;
+    border: none;
+    background: #fff;
+    font-size: 13px;
+    color: #254d72;
+    cursor: pointer;
+}
+
+.dropdown-item:hover {
+    background: #edf6ff;
+}
+
+.dropdown-item.special {
+    color: #0f6aaa;
+    font-weight: 700;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: #e1ebf5;
+}
+
+/* ---- Toggle switch ---- */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 42px;
+    height: 22px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    inset: 0;
+    border-radius: 30px;
+    background: #c5d2df;
+    transition: 0.2s;
+    cursor: pointer;
+}
+
+.slider::before {
+    content: "";
+    position: absolute;
+    left: 3px;
+    top: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    transition: 0.2s;
+}
+
+.switch input:checked + .slider {
+    background: #1f9d68;
+}
+
+.switch input:checked + .slider::before {
+    transform: translateX(20px);
+}
+
+/* ---- Quote number display ---- */
+#currentQuoteDisplay {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0d5c92;
+}
+
+/* ---- Notification animation ---- */
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes slideOut {
+    from { transform: translateX(0);    opacity: 1; }
+    to   { transform: translateX(100%); opacity: 0; }
+}

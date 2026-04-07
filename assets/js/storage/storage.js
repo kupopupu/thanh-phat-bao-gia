@@ -1,0 +1,201 @@
+/**
+ * storage/storage.js
+ * --------------------------------------------------
+ * All localStorage read/write operations.
+ * Khi chạy trên Vercel, mọi thay đổi cũng được đồng bộ lên
+ * Neon PostgreSQL qua các API routes /api/quotes và /api/customers.
+ *
+ * Depends on: state.js  (savedQuotes, savedCustomers, constants)
+ * --------------------------------------------------
+ */
+
+/* ── API sync helpers ──────────────────────────────────────────────── */
+
+/** Kiểm tra xem có đang chạy trên Vercel (hoặc localhost với vercel dev) */
+function _hasApiBackend() {
+    return typeof window !== 'undefined' &&
+        (window.location.hostname !== '' && window.location.hostname !== 'file');
+}
+
+/**
+ * Đồng bộ 1 báo giá lên DB (fire & forget — không block UI).
+ * Được gọi mỗi khi persistSavedQuotes() chạy.
+ */
+function _syncQuoteToAPI(quote) {
+    if (!_hasApiBackend() || !quote || !quote.id) return;
+    fetch('/api/quotes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(quote),
+    }).catch(() => {/* silent */});
+}
+
+/**
+ * Xóa 1 báo giá khỏi DB.
+ * Gọi khi quote bị xóa khỏi savedQuotes.
+ */
+function _deleteQuoteFromAPI(id) {
+    if (!_hasApiBackend() || !id) return;
+    fetch('/api/quotes/' + encodeURIComponent(id), {
+        method: 'DELETE',
+    }).catch(() => {/* silent */});
+}
+
+/**
+ * Đồng bộ 1 khách hàng lên DB (fire & forget).
+ */
+function _syncCustomerToAPI(customer) {
+    if (!_hasApiBackend() || !customer || !customer.code) return;
+    fetch('/api/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(customer),
+    }).catch(() => {/* silent */});
+}
+
+/**
+ * Được gọi 1 lần khi app khởi động.
+ * Tải dữ liệu từ API về rồi merge vào localStorage (API wins cho conflict).
+ * Sau khi merge xong, refresh UI nếu có.
+ */
+function initApiSync() {
+    if (!_hasApiBackend()) return;
+    // Quotes
+    fetch('/api/quotes')
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(apiQuotes => {
+            if (!Array.isArray(apiQuotes)) return;
+            loadSavedQuotes();
+            const localMap = Object.fromEntries(savedQuotes.map(q => [q.id, q]));
+            let changed = false;
+            apiQuotes.forEach(aq => {
+                const lq = localMap[aq.id];
+                // API wins nếu updatedAt API mới hơn hoặc local không có
+                if (!lq || (aq.savedAt > (lq.savedAt || lq.createdAt || ''))) {
+                    localMap[aq.id] = aq;
+                    changed = true;
+                }
+            });
+            if (changed) {
+                savedQuotes = Object.values(localMap)
+                    .sort((a, b) => (b.savedAt || b.createdAt || '') > (a.savedAt || a.createdAt || '') ? 1 : -1)
+                    .slice(0, 200);
+                persistSavedQuotesLocalOnly();
+                if (typeof renderQuoteList     === 'function') renderQuoteList('');
+                if (typeof renderDashboardStats === 'function') renderDashboardStats();
+            }
+        })
+        .catch(() => {/* silent — app vẫn dùng localStorage */});
+    // Customers
+    fetch('/api/customers')
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(apiCustomers => {
+            if (!apiCustomers || typeof apiCustomers !== 'object') return;
+            loadSavedCustomers();
+            Object.entries(apiCustomers).forEach(([code, c]) => {
+                if (!savedCustomers[code] ||
+                    (c.updatedAt > (savedCustomers[code].updatedAt || ''))) {
+                    savedCustomers[code] = c;
+                }
+            });
+            persistSavedCustomersLocalOnly();
+        })
+        .catch(() => {/* silent */});
+}
+
+// ---- Quotes ------------------------------------------------
+
+function loadSavedQuotes() {
+    try {
+        const raw = localStorage.getItem(SAVED_QUOTES_KEY) || '[]';
+        savedQuotes = JSON.parse(raw) || [];
+        // ── Migration: fix totals that were accidentally stored as vi-VN parsed floats
+        // e.g. parseFloat("561.000") = 561 instead of 561000.
+        // Detect by comparing q.total against the sum of item lineTotals.
+        let migrated = false;
+        savedQuotes.forEach(q => {
+            const itemSum = (q.items || []).reduce((s, it) => s + (Number(it.lineTotal) || 0), 0);
+            if (itemSum > 0 && Number(q.total) > 0 && itemSum > Number(q.total) * 100) {
+                // total is ~1000x too small – was stored in thousands
+                q.total = Math.round(Number(q.total) * 1000);
+                migrated = true;
+            }
+        });
+        if (migrated) persistSavedQuotes();
+    } catch (e) {
+        savedQuotes = [];
+    }
+}
+
+/** Chỉ lưu localStorage — không gọi API (dùng nội bộ để tránh vòng lặp) */
+function persistSavedQuotesLocalOnly() {
+    try { localStorage.setItem(SAVED_QUOTES_KEY, JSON.stringify(savedQuotes || [])); } catch (e) { }
+}
+
+let _quoteSyncTimer = null;
+function persistSavedQuotes() {
+    persistSavedQuotesLocalOnly();
+    // Debounced full-sync lên API (1.5 giây sau lần cuối persist)
+    if (_hasApiBackend()) {
+        clearTimeout(_quoteSyncTimer);
+        _quoteSyncTimer = setTimeout(function () {
+            fetch('/api/quotes?fullSync=1', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(savedQuotes || []),
+            }).catch(function () { /* silent */ });
+        }, 1500);
+    }
+}
+
+// ---- Customers ---------------------------------------------
+
+function loadSavedCustomers() {
+    try {
+        const raw = localStorage.getItem(SAVED_CUSTOMERS_KEY) || '{}';
+        savedCustomers = JSON.parse(raw) || {};
+    } catch (e) {
+        savedCustomers = {};
+    }
+}
+
+/** Chỉ lưu localStorage */
+function persistSavedCustomersLocalOnly() {
+    try { localStorage.setItem(SAVED_CUSTOMERS_KEY, JSON.stringify(savedCustomers || {})); } catch (e) { }
+}
+
+function persistSavedCustomers() {
+    persistSavedCustomersLocalOnly();
+}
+
+/**
+ * Create or update a customer record in localStorage.
+ * Also maintains a fast phone→info lookup map.
+ */
+function upsertCustomer(code, name, phone, address, createdAt) {
+    try {
+        if (!code) return;
+        loadSavedCustomers();
+        savedCustomers[code] = {
+            code,
+            name:      name    || '',
+            phone:     phone   || '',
+            address:   address || '',
+            updatedAt: createdAt || new Date().toISOString(),
+        };
+        persistSavedCustomers();
+        // Đồng bộ lên API
+        _syncCustomerToAPI(savedCustomers[code]);
+
+        // Also maintain a phone → info map for fast lookup
+        if (phone && phone.trim() !== '') {
+            const PHONE_MAP_KEY = 'tp_customer_phone_map_v1';
+            let phoneMap = {};
+            try { phoneMap = JSON.parse(localStorage.getItem(PHONE_MAP_KEY) || '{}') || {}; } catch (e) { }
+            phoneMap[phone.trim()] = { name: name || '', phone: phone.trim(), address: address || '' };
+            try { localStorage.setItem(PHONE_MAP_KEY, JSON.stringify(phoneMap)); } catch (e) { }
+        }
+    } catch (e) {
+        console.error('upsertCustomer error', e);
+    }
+}
