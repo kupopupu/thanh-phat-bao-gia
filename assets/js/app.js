@@ -45,12 +45,14 @@ function openNewQuoteModal() {
     const codeEl = document.getElementById('customerCode');
     if (codeEl) codeEl.value = '';
 
+    // Reset points display
+    if (typeof _updatePointsDisplay === 'function') _updatePointsDisplay('');
     // Reset items table to one blank row
     const tbody = document.getElementById('itemsBody');
     if (tbody) {
         tbody.innerHTML = `<tr>
             <td>1</td>
-            <td class="product-name-cell"><input type="text" placeholder="-- Chọn hoặc nhập tên hàng hóa --" onchange="updateRowTotal(this)"></td>
+            <td class="product-name-cell"></td>
             <td class="unit-cell"><input type="text" placeholder="Cái" onchange="updateRowTotal(this); handleUnitChange(this)"></td>
             <td><input type="number" placeholder="1" min="0" step="1" onchange="updateRowTotal(this)"></td>
             <td class="price-cell"></td>
@@ -60,6 +62,8 @@ function openNewQuoteModal() {
         </tr>`;
         const row = tbody.querySelector('tr');
         if (row) {
+            // Name cell with catalog dropdown
+            row.querySelector('.product-name-cell').appendChild(buildProductSelect());
             // Setup price cell
             const priceInp = document.createElement('input');
             priceInp.type = 'text'; priceInp.placeholder = '.000đ'; priceInp.dataset.raw = '';
@@ -195,6 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load persisted data
     loadSavedQuotes();
     loadSavedCustomers();
+    loadSavedProducts();
 
     // Default VAT = 0%
     const vatEl = document.getElementById('vat');

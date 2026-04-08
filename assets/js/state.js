@@ -28,7 +28,9 @@ let productList = [];  // [{ name, unit, price }]
 // ---- Persistence keys (shared with storage.js) ----
 const SAVED_QUOTES_KEY    = 'tp_saved_quotes_v1';
 const SAVED_CUSTOMERS_KEY = 'tp_customers_v1';
+const SAVED_PRODUCTS_KEY  = 'tp_product_catalog_v1';
 
 // ---- In-memory stores (loaded from localStorage on demand) ----
 let savedQuotes    = [];
 let savedCustomers = {};
+let savedProducts  = [];  // [{ name, unit, price, updatedAt }]

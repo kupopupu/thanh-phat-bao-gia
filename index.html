@@ -259,6 +259,46 @@ Thanh Phát Webapp copy    <script src="https://cdnjs.cloudflare.com/ajax/libs/h
         .cp-pt-remain { color:#1a7a35; font-weight:700; }
         .cp-debt      { color:#c0392b; font-weight:700; }
         .cp-total     { color:#0d5c92; font-weight:700; }
+
+        /* ── Product List Page ─────────────────────────────────────── */
+        .pl-topbar { display:flex; align-items:center; gap:14px; margin-bottom:16px;
+                     padding:16px 20px; background:#fff;
+                     border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.07); flex-wrap:wrap; }
+        .pl-title  { margin:0; font-size:20px; font-weight:800; color:#0d5c92; flex:1; }
+        .pl-count  { font-size:13px; color:#888; white-space:nowrap; }
+        .pl-search-bar { margin-bottom:14px; }
+        .pl-search-bar input { width:100%; box-sizing:border-box; padding:10px 16px;
+                               border-radius:999px; border:1px solid #c8d8e8;
+                               font-size:13px; font-family:inherit; background:#fff; }
+        .pl-table { width:100%; border-collapse:collapse; font-size:13px; min-width:750px; table-layout:fixed; }
+        .pl-table thead tr { background:#1D75AE; color:#fff; }
+        .pl-table th { padding:11px 14px; font-weight:600; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .pl-table td { padding:9px 14px; border-bottom:1px solid #f0f0f0; vertical-align:middle; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .pl-table td.pl-td-name { white-space:normal; word-break:break-word; line-height:1.4; }
+        .pl-table td.pl-td-unit { white-space:normal; word-break:break-word; }
+        .pl-table tbody tr:hover { background:#f0f7ff; }
+        .pl-table tbody tr:last-child td { border-bottom:none; }
+        .pl-btn-edit { background:#1D75AE; color:#fff; border:none; border-radius:5px; padding:3px 7px; font-size:13px; cursor:pointer; margin-right:2px; }
+        .pl-btn-edit:hover { background:#155c8a; }
+        .pl-btn-del  { background:#c0392b; color:#fff; border:none; border-radius:5px; padding:3px 7px; font-size:13px; cursor:pointer; }
+        .pl-btn-del:hover  { background:#a93226; }
+
+        /* ── Edit Product Mini-Modal ───────────────────────────── */
+        #editProductModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+                            background:rgba(0,0,0,.55); z-index:6000; align-items:center; justify-content:center; }
+        #editProductModal.show { display:flex; }
+        .ep-box { background:#fff; border-radius:14px; padding:28px 30px; max-width:400px; width:90%;
+                  box-shadow:0 12px 40px rgba(0,0,0,.3); }
+        .ep-box h4 { margin:0 0 20px; font-size:18px; color:#0d5c92; font-weight:800; }
+        .ep-row { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+        .ep-row label { font-size:13px; font-weight:600; color:#3b5c7e; }
+        .ep-row input { padding:10px 14px; border:1px solid #c8d8e8; border-radius:8px;
+                        font-size:14px; font-family:inherit; }
+        .ep-btn-save   { background:#1D75AE; color:#fff; border:none; border-radius:10px;
+                         padding:11px 26px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; }
+        .ep-btn-save:hover { background:#155c8a; }
+        .ep-btn-cancel { background:#f1f3f5; color:#555; border:none; border-radius:10px;
+                         padding:11px 20px; font-size:14px; cursor:pointer; font-family:inherit; }
     </style>
 </head>
 <body>
@@ -288,6 +328,8 @@ Thanh Phát Webapp copy    <script src="https://cdnjs.cloudflare.com/ajax/libs/h
         <div id="menuInline">
             <div class="sidebar-compact-inner">
 
+                <div class="sb-section-label">Danh mục</div>
+                <button class="sb-item" onclick="showProductList()">📦 Danh sách sản phẩm</button>
                 <div class="sb-section-label">Báo cáo</div>
                 <button class="sb-item" onclick="showCustomerList()">👥 Khách hàng</button>
                 <button class="sb-item" onclick="showTotalRevenue()">💵 Tổng doanh thu</button>
@@ -350,6 +392,23 @@ Thanh Phát Webapp copy    <script src="https://cdnjs.cloudflare.com/ajax/libs/h
 
             </div>
 
+            <!-- ══ PRODUCT LIST PAGE ══ -->
+            <div id="productPage" style="display:none;">
+                <div class="pl-topbar">
+                    <button class="cp-back-btn" onclick="showDashboard()">&#8592; Quay lại</button>
+                    <h2 class="pl-title">📦 Danh sách Sản Phẩm</h2>
+                    <span id="plProductCount" class="pl-count"></span>
+                </div>
+                <div class="pl-search-bar">
+                    <input id="plSearch" type="text"
+                        placeholder="🔍 Tìm theo tên sản phẩm hoặc đơn vị…"
+                        oninput="renderProductPage(this.value)">
+                </div>
+                <div id="productPageContent" style="overflow-x:auto;">
+                    <!-- populated by renderProductPage() -->
+                </div>
+            </div>
+
             <!-- ══ CUSTOMER PAGE (toggle with main-content) ══ -->
             <div id="customerPage" style="display:none;">
                 <div class="cp-topbar">
@@ -393,14 +452,15 @@ Thanh Phát Webapp copy    <script src="https://cdnjs.cloudflare.com/ajax/libs/h
                 <div class="section customer-section">
                     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
                         <h3 style="margin:0;">▣ THÔNG TIN KHÁCH HÀNG</h3>
-                        <div style="display:flex;gap:8px;align-items:center;margin-left:auto;">
-                            <input type="tel" id="customerPhoneSearch" placeholder="Tìm SĐT khách"
-                                style="padding:8px 16px;font-size:13px;border-radius:24px;border:1px solid #c8d8e8;background:#f9fcff;width:180px;">
-                            <button class="btn btn-primary" onclick="searchCustomerByPhone()"
-                                style="padding:8px 20px;font-size:13px;border-radius:24px;font-weight:600;">Tìm</button>
-                            <button class="btn" onclick="clearCustomerFields()"
-                                style="padding:8px 16px;font-size:13px;background:#f8f9fa;border:1px solid #dce6f2;border-radius:24px;color:#5a7691;font-weight:600;">Clear</button>
+                        <!-- Points inline bar -->
+                        <div id="customerPointsBar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;">
+                            <span style="font-size:13px;color:#1D75AE;">🏆 Tổng điểm: <strong id="pointsDisplayVal">0</strong> điểm</span>
+                            <button class="btn btn-primary" onclick="openUsePointsModal()"
+                                style="padding:4px 14px;font-size:13px;border-radius:20px;font-weight:600;">Sử dụng điểm</button>
+                            <span id="pointsAppliedBadge" style="display:none;font-size:12px;color:#1a7a35;font-weight:600;">✓ Đã áp dụng <span id="pointsAppliedAmt"></span> điểm</span>
                         </div>
+                        <button class="btn" onclick="clearCustomerFields()"
+                            style="margin-left:auto;padding:6px 18px;font-size:13px;background:#f8f9fa;border:1px solid #dce6f2;border-radius:24px;color:#5a7691;font-weight:600;">Clear</button>
                     </div>
 
                     <input type="hidden" id="customerCode" value="">
@@ -416,7 +476,7 @@ Thanh Phát Webapp copy    <script src="https://cdnjs.cloudflare.com/ajax/libs/h
                         <div style="display:flex;flex-direction:column;position:relative;">
                             <label for="customerPhone" style="font-size:13px;font-weight:600;margin-bottom:6px;color:#3b5c7e;">Số điện thoại <span style="color:#d9534f">*</span></label>
                             <input type="tel" id="customerPhone" placeholder="Nhập số điện thoại" autocomplete="off"
-                                oninput="showCustDropdown('phone', this.value)"
+                                oninput="showCustDropdown('phone', this.value); _updatePointsDisplay(this.value)"
                                 onblur="hideCustDropdownDelayed()"
                                 style="padding:10px 16px;font-size:14px;border-radius:8px;border:1px solid #c8d8e8;background:#fff;box-sizing:border-box;">
                         </div>
@@ -648,6 +708,38 @@ Thanh Phát Webapp copy    <script src="https://cdnjs.cloudflare.com/ajax/libs/h
     <script src="assets/js/app.js"></script>
 
     <!-- ══════════════════════════════════════════════════════════════
+         EDIT PRODUCT MODAL  (z-index 6000)
+    ══════════════════════════════════════════════════════════════ -->
+    <div id="editProductModal">
+        <div class="ep-box">
+            <h4>✏️ Sửa thông tin sản phẩm</h4>
+            <input type="hidden" id="epOrigName">
+            <div class="ep-row">
+                <label>Tên sản phẩm <span style="color:#d9534f">*</span></label>
+                <input type="text" id="epName" placeholder="Tên sản phẩm">
+            </div>
+            <div class="ep-row">
+                <label>Đơn vị tính (ĐVT)</label>
+                <input type="text" id="epUnit" placeholder="VD: Thùng, Cái, Kg...">
+            </div>
+            <div class="ep-row">
+                <label>Đơn giá (VNĐ)</label>
+                <input type="text" id="epPrice" placeholder="VD: 500.000"
+                    oninput="(function(el){
+                        var cleaned = el.value.replace(/[^0-9]/g,'');
+                        el.dataset.raw = cleaned || '0';
+                        el.value = cleaned ? new Intl.NumberFormat('vi-VN').format(parseInt(cleaned,10)) : '';
+                    })(this)"
+                    data-raw="0">
+            </div>
+            <div style="display:flex;gap:10px;margin-top:6px;justify-content:flex-end;">
+                <button class="ep-btn-cancel" onclick="closeEditProductModal()">Hủy</button>
+                <button class="ep-btn-save"   onclick="saveEditProduct()">💾 Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
          CONFIRM ORDER MINI-MODAL  (z-index 5000)
     ══════════════════════════════════════════════════════════════ -->
     <div id="confirmOrderModal">
@@ -661,6 +753,25 @@ Thanh Phát Webapp copy    <script src="https://cdnjs.cloudflare.com/ajax/libs/h
                 <button class="com-btn-nodeposit" onclick="confirmOrderWithDeposit(window._confirmOrderId, false)">❌ Chưa cọc</button>
             </div>
             <button class="com-cancel" onclick="document.getElementById('confirmOrderModal').classList.remove('show')">Hủy</button>
+        </div>
+    </div>
+
+    <!-- ── Use-Points Modal ── -->
+    <div id="usePointsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:4000;align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:14px;padding:28px 28px 22px;width:360px;max-width:92vw;box-shadow:0 10px 40px rgba(0,0,0,.25);">
+            <div style="font-size:16px;font-weight:700;color:#1D75AE;margin-bottom:14px;">🏆 Sử dụng điểm tích lũy</div>
+            <div style="font-size:13px;color:#555;margin-bottom:6px;">Điểm hiện có: <strong id="usePointsAvail" style="color:#1D75AE;">0</strong> điểm</div>
+            <div style="font-size:12px;color:#888;margin-bottom:16px;line-height:1.6;">1 điểm = 1.000đ &nbsp;•&nbsp; Tối thiểu 50 điểm &nbsp;•&nbsp; Tối đa 100 điểm</div>
+            <input type="number" id="usePointsInput" placeholder="Nhập số điểm muốn dùng (50 – 100)"
+                min="50" max="100" step="1"
+                style="width:100%;padding:10px 14px;font-size:14px;border:1px solid #c8d8e8;border-radius:8px;box-sizing:border-box;margin-bottom:16px;">
+            <div id="usePointsError" style="display:none;color:#c0392b;font-size:12px;margin-bottom:10px;"></div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button class="btn" onclick="closeUsePointsModal()"
+                    style="padding:8px 22px;background:#f8f9fa;border:1px solid #dce6f2;border-radius:20px;color:#5a7691;font-weight:600;">Hủy</button>
+                <button class="btn btn-primary" onclick="confirmUsePoints()"
+                    style="padding:8px 22px;border-radius:20px;font-weight:600;">Áp dụng</button>
+            </div>
         </div>
     </div>
 

@@ -54,7 +54,7 @@ function buildCustomerData() {
         const confirmed = st !== 'pending';
         if (confirmed) {
             c.orders   += 1;
-            c.totalPts += Math.floor(tot / 100000);
+            c.totalPts += Math.floor(tot / 200000);
             c.totalAmt += tot;
         }
         // Tổng nợ
@@ -124,8 +124,10 @@ function showCustomerList() {
     _cpAllData = buildCustomerData();
     const mainContent = document.querySelector('.container .main-content');
     const cpPage      = document.getElementById('customerPage');
+    const plPage      = document.getElementById('productPage');
     if (mainContent) mainContent.style.display = 'none';
-    if (cpPage)      cpPage.style.display = 'block';
+    if (plPage)      plPage.style.display      = 'none';
+    if (cpPage)      cpPage.style.display      = 'block';
     const countEl = document.getElementById('cpCustomerCount');
     if (countEl) countEl.textContent = `${_cpAllData.length} khách hàng`;
     const searchEl = document.getElementById('cpSearch');
@@ -136,12 +138,14 @@ function showCustomerList() {
 function showDashboard() {
     const mainContent = document.querySelector('.container .main-content');
     const cpPage      = document.getElementById('customerPage');
+    const plPage      = document.getElementById('productPage');
     if (mainContent) {
         // Restore original main content if it was replaced by a report view
         if (window._savedMainContent) mainContent.innerHTML = window._savedMainContent;
         mainContent.style.display = '';
     }
-    if (cpPage)      cpPage.style.display = 'none';
+    if (cpPage) cpPage.style.display = 'none';
+    if (plPage) plPage.style.display = 'none';
     // Ensure the quote list is rendered after restoring the DOM
     if (typeof renderQuoteList === 'function') renderQuoteList(document.getElementById('mainQuoteSearch')?.value || '');
 }
@@ -648,3 +652,168 @@ function importData() {
     };
     input.click();
 }
+
+/* ------------------------------------------------------------------ */
+/*  Product List Page                                                   */
+/* ------------------------------------------------------------------ */
+
+/** Tính SL đã bán & tổng tiền đã bán của từng sản phẩm từ savedQuotes */
+function _buildProductStats() {
+    const stats = {}; // key = product name
+    loadSavedQuotes();
+    savedQuotes.forEach(function(q) {
+        (q.items || []).forEach(function(item) {
+            const n = (item.name || '').trim();
+            if (!n) return;
+            if (!stats[n]) stats[n] = { qty: 0, revenue: 0 };
+            stats[n].qty     += Number(item.qty)       || 0;
+            stats[n].revenue += Number(item.lineTotal)  || 0;
+        });
+    });
+    return stats;
+}
+
+let _plAllData    = [];
+let _plSearchTerm = '';
+
+function renderProductPage(searchTerm) {
+    _plSearchTerm = (searchTerm || '').toLowerCase().trim();
+    loadSavedProducts();
+    const stats = _buildProductStats();
+    const fmt   = v => new Intl.NumberFormat('vi-VN').format(v);
+
+    const filtered = _plAllData.filter(function(p) {
+        return !_plSearchTerm ||
+            (p.name || '').toLowerCase().includes(_plSearchTerm) ||
+            (p.unit || '').toLowerCase().includes(_plSearchTerm);
+    });
+
+    const ct = document.getElementById('productPageContent');
+    if (!ct) return;
+
+    const countEl = document.getElementById('plProductCount');
+    if (countEl) countEl.textContent = _plAllData.length + ' sản phẩm';
+
+    if (!filtered.length) {
+        ct.innerHTML = `<div style="text-align:center;padding:60px 20px;color:#aaa;">
+            <div style="font-size:48px;margin-bottom:12px;">📦</div>
+            <p>${_plSearchTerm ? 'Không tìm thấy sản phẩm phù hợp.' : 'Chưa có sản phẩm nào trong danh mục. Hãy lập báo giá để tự động thêm sản phẩm!'}</p>
+        </div>`;
+        return;
+    }
+
+    const rows = filtered.map(function(p, i) {
+        const s      = stats[p.name] || { qty: 0, revenue: 0 };
+        const safeN  = escapeHtml(p.name);
+        const safeU  = escapeHtml(p.unit || '');
+        // Escape backslashes then single-quotes so onclick='...' is valid HTML
+        const nameJS = p.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        return `<tr>
+            <td style="text-align:center;color:#888;">${i + 1}</td>
+            <td class="pl-td-name" style="font-weight:600;" title="${safeN}">${safeN}</td>
+            <td class="pl-td-unit">${safeU}</td>
+            <td style="text-align:right;color:#0d5c92;font-weight:700;">${fmt(p.price)}đ</td>
+            <td style="text-align:right;color:#e67e22;">${fmt(s.qty)}</td>
+            <td style="text-align:right;color:#1a7a35;font-weight:700;">${fmt(s.revenue)}đ</td>
+            <td style="text-align:center;white-space:nowrap;">
+                <button class="pl-btn-edit" onclick="openEditProduct('${nameJS}')" title="Sửa">✏️</button>
+                <button class="pl-btn-del"  onclick="confirmDeleteProduct('${nameJS}')" title="Xóa">🗑</button>
+            </td>
+        </tr>`;
+    }).join('');
+
+    ct.innerHTML = `<table class="pl-table">
+        <thead><tr>
+            <th style="width:42px;text-align:center;">#</th>
+            <th style="width:380px;">Tên sản phẩm</th>
+            <th style="width:80px;">ĐVT</th>
+            <th style="width:130px;text-align:right;">Đơn giá</th>
+            <th style="width:100px;text-align:right;">SL đã bán</th>
+            <th style="width:150px;text-align:right;">Tổng tiền bán</th>
+            <th style="width:76px;text-align:center;">Thao tác</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function showProductList() {
+    loadSavedProducts();
+    _plAllData = (savedProducts || []).slice().sort(function(a, b) {
+        return (a.name || '').localeCompare(b.name || '', 'vi');
+    });
+
+    // Hide main, show product page
+    const mainContent = document.querySelector('.container .main-content');
+    const cpPage      = document.getElementById('customerPage');
+    const plPage      = document.getElementById('productPage');
+    if (mainContent) mainContent.style.display = 'none';
+    if (cpPage)      cpPage.style.display      = 'none';
+    if (plPage)      plPage.style.display      = 'block';
+
+    const s = document.getElementById('plSearch');
+    if (s) s.value = '';
+    renderProductPage('');
+}
+
+/** Mở form sửa sản phẩm (inline mini-modal) */
+function openEditProduct(productName) {
+    loadSavedProducts();
+    const p = savedProducts.find(function(x) { return x.name === productName; });
+    if (!p) return;
+
+    const modal = document.getElementById('editProductModal');
+    if (!modal) return;
+    document.getElementById('epName').value  = p.name;
+    document.getElementById('epUnit').value  = p.unit  || '';
+    document.getElementById('epPrice').value = p.price > 0 ? new Intl.NumberFormat('vi-VN').format(p.price) : '';
+    document.getElementById('epPrice').dataset.raw = String(p.price || 0);
+    document.getElementById('epOrigName').value = p.name;
+    modal.style.display = 'flex';
+}
+
+function closeEditProductModal() {
+    const modal = document.getElementById('editProductModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function saveEditProduct() {
+    const origName = (document.getElementById('epOrigName')?.value || '').trim();
+    const newName  = (document.getElementById('epName')?.value  || '').trim();
+    const newUnit  = (document.getElementById('epUnit')?.value  || '').trim();
+    const rawPrice = parseInt((document.getElementById('epPrice')?.dataset?.raw || '0'), 10) || 0;
+
+    if (!newName) { showNotification('⚠️ Tên sản phẩm không được để trống!', 'error'); return; }
+
+    loadSavedProducts();
+    // Remove old entry if name changed
+    if (origName && origName !== newName) {
+        savedProducts = savedProducts.filter(function(p) { return p.name !== origName; });
+        persistSavedProducts();
+    }
+    upsertProduct(newName, newUnit, rawPrice);
+    closeEditProductModal();
+    showNotification('✅ Đã cập nhật: ' + newName + ' — Giá mới áp dụng cho báo giá tạo về sau.');
+
+    // Re-load to get freshest data then re-render
+    loadSavedProducts();
+    _plAllData = (savedProducts || []).slice().sort(function(a, b) {
+        return (a.name || '').localeCompare(b.name || '', 'vi');
+    });
+    renderProductPage(_plSearchTerm);
+}
+
+function confirmDeleteProduct(productName) {
+    if (!confirm('Xóa sản phẩm "' + productName + '" khỏi danh mục?')) return;
+    deleteProduct(productName);
+    loadSavedProducts();
+    _plAllData = (savedProducts || []).slice().sort(function(a, b) {
+        return (a.name || '').localeCompare(b.name || '', 'vi');
+    });
+    showNotification('Đã xóa: ' + productName);
+    renderProductPage(_plSearchTerm);
+}
+
+function showProductListDashboard() {
+    showDashboard();
+}
+

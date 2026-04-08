@@ -88,6 +88,7 @@ function selectCustSuggestion(idx) {
     setVal('customerPhone',   c.phone);
     setVal('customerAddress', c.address);
     dd.style.display = 'none';
+    _updatePointsDisplay(c.phone);
 }
 
 /** Delay hiding so mousedown on item can fire first. */
@@ -125,6 +126,9 @@ function clearCustomerFields() {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
+    _updatePointsDisplay('');
+    // Remove any applied points row
+    _removePointsRow();
 }
 
 /**
@@ -154,4 +158,107 @@ function handleUnitChange(input) {
     };
     const key = input.value.trim();
     if (unitMap[key]) input.value = unitMap[key];
+}
+
+// ── Points display & use-points ──────────────────────────────────────────────
+
+/** Cached total points for the current customer being quoted. */
+let _currentCustomerPoints = 0;
+
+/**
+ * Look up completed-order points for a phone number and update the
+ * #customerPointsBar display. Called from the phone input's oninput.
+ * @param {string} phone
+ */
+function _updatePointsDisplay(phone) {
+    const bar   = document.getElementById('customerPointsBar');
+    const valEl = document.getElementById('pointsDisplayVal');
+    const badge = document.getElementById('pointsAppliedBadge');
+    if (!bar) return;
+
+    const ph = (phone || '').trim();
+    if (!ph) {
+        bar.style.display = 'none';
+        _currentCustomerPoints = 0;
+        return;
+    }
+
+    // Sum points from COMPLETED orders only
+    try {
+        loadSavedQuotes();
+    } catch (e) {}
+    const pts = (savedQuotes || []).reduce(function(s, q) {
+        try {
+            if ((q.customerPhone || '').trim() === ph &&
+                (q.orderStatus || '') === 'completed') {
+                return s + Math.floor((Number(q.total) || 0) / 200000);
+            }
+        } catch (e) {}
+        return s;
+    }, 0);
+
+    _currentCustomerPoints = pts;
+    if (valEl) valEl.textContent = pts.toLocaleString('vi-VN');
+    if (badge) badge.style.display = 'none';
+    bar.style.display = pts > 0 ? 'flex' : 'none';
+}
+
+/** Open the use-points modal pre-filled with available points. */
+function openUsePointsModal() {
+    const modal  = document.getElementById('usePointsModal');
+    const avail  = document.getElementById('usePointsAvail');
+    const inp    = document.getElementById('usePointsInput');
+    const errEl  = document.getElementById('usePointsError');
+    if (!modal) return;
+    if (avail) avail.textContent = _currentCustomerPoints.toLocaleString('vi-VN');
+    if (inp)   { inp.value = ''; inp.max = Math.min(100, _currentCustomerPoints); }
+    if (errEl) errEl.style.display = 'none';
+    modal.style.display = 'flex';
+}
+
+/** Close the use-points modal without applying. */
+function closeUsePointsModal() {
+    const modal = document.getElementById('usePointsModal');
+    if (modal) modal.style.display = 'none';
+}
+
+/** Validate input and apply the points row. */
+function confirmUsePoints() {
+    const inp   = document.getElementById('usePointsInput');
+    const errEl = document.getElementById('usePointsError');
+    const pts   = parseInt((inp ? inp.value : ''), 10) || 0;
+
+    const showErr = (msg) => {
+        if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; }
+    };
+
+    if (pts < 50) { showErr('Cần tối thiểu 50 điểm.'); return; }
+    if (pts > 100) { showErr('Tối đa 100 điểm mỗi đơn.'); return; }
+    if (pts > _currentCustomerPoints) {
+        showErr('Điểm nhập vượt quá số điểm hiện có (' + _currentCustomerPoints + ' điểm).'); return;
+    }
+
+    applyPointsRow(pts);
+    closeUsePointsModal();
+
+    // Update badge
+    const badge    = document.getElementById('pointsAppliedBadge');
+    const amtSpan  = document.getElementById('pointsAppliedAmt');
+    if (badge)   badge.style.display = 'inline';
+    if (amtSpan) amtSpan.textContent = pts;
+}
+
+/** Remove any existing points-row from the items table. */
+function _removePointsRow() {
+    const existing = document.querySelector('#itemsBody tr[data-points-row]');
+    if (existing) {
+        existing.remove();
+        // Renumber rows
+        document.querySelectorAll('#itemsBody tr').forEach((r, i) => {
+            if (r.cells[0]) r.cells[0].textContent = i + 1;
+        });
+        if (typeof updateSummary === 'function') updateSummary();
+    }
+    const badge = document.getElementById('pointsAppliedBadge');
+    if (badge) badge.style.display = 'none';
 }

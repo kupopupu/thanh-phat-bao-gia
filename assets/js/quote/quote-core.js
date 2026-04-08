@@ -117,11 +117,17 @@ function saveCurrentQuote(optionalData) {
     let balance = (optionalData && optionalData.balance != null) ? optionalData.balance : total;
     const createdAt = new Date().toISOString();
 
-    // Collect row items
+    // Collect row items (skip the special points-redemption row)
     const items = [];
+    let pointsUsed = 0;
     try {
         document.querySelectorAll('#itemsBody tr').forEach(row => {
             try {
+                // Points-redemption row: capture qty, don't add to regular items
+                if (row.getAttribute('data-points-row') === 'true') {
+                    pointsUsed = parseInt(String(row.cells[3]?.textContent || '0'), 10) || 0;
+                    return;
+                }
                 const nameCell  = row.querySelector('.product-name-cell');
                 const nameInp   = nameCell ? nameCell.querySelector('input, select') : null;
                 const nameVal   = nameInp ? (nameInp.value || '') : '';
@@ -202,7 +208,7 @@ function saveCurrentQuote(optionalData) {
 
     const summary = {
         id, customerCode, customerName, customerPhone, customerAddress,
-        total, items,
+        total, items, pointsUsed,
         vatPercent, quoteType,
         depositDisabled: depositDisabledFlag, depositAmount,
         depositConfirmed: existingDepositConfirmed,
@@ -212,6 +218,29 @@ function saveCurrentQuote(optionalData) {
         balance,
         createdAt,
     };
+
+    // Compute loyalty points for this quote (1 point per 100.000 VND)
+    // pointsEarned     = điểm dự kiến của báo giá này
+    // pointsTotalAtSave = tổng điểm đã ghi nhận từ đơn COMPLETED (không tính đơn này trừ khi completed)
+    try {
+        loadSavedQuotes();
+        const completedPoints = savedQuotes.reduce(function(s, q) {
+            try {
+                if ((q.customerPhone || '').trim() === (customerPhone || '').trim() &&
+                    q.id !== id &&
+                    (q.orderStatus || '') === 'completed') {
+                    return s + Math.floor((Number(q.total) || 0) / 200000);
+                }
+            } catch (e) { }
+            return s;
+        }, 0);
+        const pointsEarned = Math.floor((Number(total) || 0) / 200000);
+        summary.pointsEarned = pointsEarned;
+        // Chỉ cộng điểm của đơn này vào tổng khi trạng thái là completed
+        summary.pointsTotalAtSave = existingOrderStatus === 'completed'
+            ? completedPoints + pointsEarned
+            : completedPoints;
+    } catch (e) { }
 
     // Persist (update in place if id already exists, otherwise prepend)
     const existingIdx = savedQuotes.findIndex(q => q.id === id);
@@ -227,6 +256,15 @@ function saveCurrentQuote(optionalData) {
     }
     if (savedQuotes.length > 200) savedQuotes.length = 200;
     persistSavedQuotes();
+
+    // Auto-save products/units/prices to the product catalog
+    try {
+        items.forEach(function(item) {
+            if (item.name && item.name.trim() && item.price > 0) {
+                upsertProduct(item.name.trim(), item.unit || '', item.price);
+            }
+        });
+    } catch (e) { console.error('upsertProduct loop error', e); }
 
     if (customerCode) upsertCustomer(customerCode, customerName, customerPhone, customerAddress, createdAt);
 
@@ -376,11 +414,8 @@ function loadQuoteIntoForm(id) {
             `;
             tbody.appendChild(row);
 
-            const nameInp = document.createElement('input');
-            nameInp.type = 'text';
-            nameInp.value = (it.name || '');
-            nameInp.onchange = e => updateRowTotal(e.target);
-            row.querySelector('.product-name-cell').appendChild(nameInp);
+            // Name cell with catalog dropdown (preset to saved value)
+            row.querySelector('.product-name-cell').appendChild(buildProductSelect(it.name || ''));
 
             const unitInp = document.createElement('input');
             unitInp.type = 'text';

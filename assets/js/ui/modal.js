@@ -123,8 +123,8 @@ function renderQuoteList(searchTerm) {
             ? `<span style="color:${debtAmt > 0 ? '#c0392b' : '#1a7a35'};font-weight:700;">${formatCurrency(debtAmt)}</span>`
             : '—';
 
-        // ---- Tích điểm (1 điểm / 100.000đ) ----
-        const points = status !== 'pending' ? Math.floor(total / 100000) : 0;
+        // ---- Tích điểm (1 điểm / 200.000đ) ----
+        const points = status !== 'pending' ? Math.floor(total / 200000) : 0;
         const pointsStr = status !== 'pending'
             ? `<span style="color:#8e44ad;font-weight:700;">${points.toLocaleString('vi-VN')}</span>`
             : '—';

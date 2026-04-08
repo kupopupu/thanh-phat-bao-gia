@@ -53,6 +53,70 @@ function _syncCustomerToAPI(customer) {
     }).catch(() => {/* silent */});
 }
 
+// ---- Product Catalog ----------------------------------------
+
+function loadSavedProducts() {
+    try {
+        const raw = localStorage.getItem(SAVED_PRODUCTS_KEY) || '[]';
+        savedProducts = JSON.parse(raw) || [];
+    } catch (e) {
+        savedProducts = [];
+    }
+}
+
+function persistSavedProducts() {
+    try { localStorage.setItem(SAVED_PRODUCTS_KEY, JSON.stringify(savedProducts || [])); } catch (e) { }
+}
+
+/**
+ * Create or update a product in the catalog.
+ * Identified by name (trimmed, case-sensitive).
+ * @param {string} name
+ * @param {string} unit
+ * @param {number} price
+ */
+function upsertProduct(name, unit, price) {
+    try {
+        const n = (name || '').trim();
+        if (!n) return;
+        loadSavedProducts();
+        const idx = savedProducts.findIndex(p => p.name === n);
+        const entry = {
+            name: n,
+            unit: (unit || '').trim(),
+            price: parseFloat(price) || 0,
+            updatedAt: new Date().toISOString(),
+        };
+        if (idx !== -1) {
+            // Preserve createdAt; only update unit/price if provided
+            entry.createdAt = savedProducts[idx].createdAt || entry.updatedAt;
+            savedProducts[idx] = entry;
+        } else {
+            entry.createdAt = entry.updatedAt;
+            savedProducts.push(entry);
+        }
+        savedProducts.sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+        persistSavedProducts();
+    } catch (e) {
+        console.error('upsertProduct error', e);
+    }
+}
+
+/**
+ * Delete a product from the catalog by name.
+ */
+function deleteProduct(name) {
+    try {
+        const n = (name || '').trim();
+        if (!n) return;
+        loadSavedProducts();
+        savedProducts = savedProducts.filter(p => p.name !== n);
+        persistSavedProducts();
+    } catch (e) {
+        console.error('deleteProduct error', e);
+    }
+}
+
 /**
  * Được gọi 1 lần khi app khởi động.
  * Tải dữ liệu từ API về rồi merge vào localStorage (API wins cho conflict).

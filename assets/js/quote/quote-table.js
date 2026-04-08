@@ -237,17 +237,9 @@ function addRow() {
     `;
     tbody.appendChild(newRow);
 
-    // Name cell: datalist if productList loaded, else plain input
+    // Name cell: always use buildProductSelect (shows catalog + Excel suggestions)
     const nameCell = newRow.querySelector('.product-name-cell');
-    if (currentQuoteType === 'cup' && productList && productList.length) {
-        nameCell.appendChild(buildProductSelect());
-    } else {
-        const inp = document.createElement('input');
-        inp.type = 'text';
-        inp.placeholder = placeholder;
-        inp.onchange = e => updateRowTotal(e.target);
-        nameCell.appendChild(inp);
-    }
+    nameCell.appendChild(buildProductSelect());
 
     // Unit cell
     const unitInp = document.createElement('input');
@@ -338,17 +330,9 @@ function resetFormForQuoteType() {
     `;
     tbody.appendChild(tr);
 
-    // Name cell
+    // Name cell: always use catalog dropdown
     const nameCell = tr.querySelector('.product-name-cell');
-    if (currentQuoteType === 'cup' && productList && productList.length) {
-        nameCell.appendChild(buildProductSelect('Chọn hàng hóa'));
-    } else {
-        const inp = document.createElement('input');
-        inp.type = 'text';
-        inp.placeholder = placeholder;
-        inp.onchange = e => updateRowTotal(e.target);
-        nameCell.appendChild(inp);
-    }
+    nameCell.appendChild(buildProductSelect());
 
     // Unit cell
     const unitInp = document.createElement('input');
@@ -381,34 +365,61 @@ function resetFormForQuoteType() {
 
 /**
  * Convert existing row name cells when quote type changes.
- * cup → adds datalist if productList exists.
- * other → replaces datalist input with plain input.
+ * Always keeps a catalog-aware datalist input.
  */
 function convertRowsForQuoteType() {
     document.querySelectorAll('#itemsBody tr').forEach(row => {
         const nameCell = row.querySelector('.product-name-cell');
         if (!nameCell) return;
-
-        const existingSelect = nameCell.querySelector('select');
-        const existingInput  = nameCell.querySelector('input');
-
-        if (currentQuoteType === 'cup') {
-            if (productList && productList.length && !existingSelect) {
-                const currentValue = existingInput ? existingInput.value : '';
-                nameCell.innerHTML = '';
-                nameCell.appendChild(buildProductSelect(currentValue));
-            }
-        } else {
-            if (existingSelect) {
-                const val = existingSelect.value || '';
-                nameCell.innerHTML = '';
-                const inp = document.createElement('input');
-                inp.type = 'text';
-                inp.value = val;
-                inp.placeholder = 'Banner, Poster, Sticker, Namecard...';
-                inp.addEventListener('change', e => updateRowTotal(e.target));
-                nameCell.appendChild(inp);
-            }
+        const existingInput = nameCell.querySelector('input[list]');
+        // Already has a datalist-linked input, just refresh datalist options
+        if (existingInput) {
+            existingInput.dispatchEvent(new Event('focus'));
+            return;
         }
+        // Replace plain input with catalog dropdown
+        const existingPlain = nameCell.querySelector('input');
+        const currentValue  = existingPlain ? existingPlain.value : '';
+        nameCell.innerHTML  = '';
+        const sel = buildProductSelect(currentValue);
+        nameCell.appendChild(sel);
     });
+}
+
+/**
+ * Insert (or replace) a special "Điểm đã tích" discount row in the items table.
+ * The row carries a negative total equal to pts × 1,000đ.
+ * @param {number} pts  Number of points to redeem (each = 1,000đ)
+ */
+function applyPointsRow(pts) {
+    // Remove any previous points row
+    const prev = document.querySelector('#itemsBody tr[data-points-row]');
+    if (prev) prev.remove();
+
+    const body = document.getElementById('itemsBody');
+    if (!body) return;
+
+    const rowNum   = body.querySelectorAll('tr').length + 1;
+    const unitPrice = 1000;   // 1 điểm = 1,000đ
+    const lineTotal = -(pts * unitPrice);   // negative
+    const fmt       = v => new Intl.NumberFormat('vi-VN').format(Math.abs(v));
+
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-points-row', 'true');
+    tr.style.background = '#fff8e1';
+    tr.innerHTML = `
+        <td style="text-align:center;color:#888;">${rowNum}</td>
+        <td class="product-name-cell" style="font-style:italic;color:#7b5800;font-weight:600;">Điểm đã tích</td>
+        <td class="unit-cell" style="text-align:center;color:#555;">Điểm</td>
+        <td style="text-align:center;font-weight:600;">${pts}</td>
+        <td class="price-cell" style="text-align:right;color:#555;">1.000đ</td>
+        <td class="discount-cell" style="text-align:right;color:#aaa;">—</td>
+        <td class="row-total" data-raw="${lineTotal}" data-disc-row="0"
+            style="text-align:right;color:#c0392b;font-weight:700;">-${fmt(lineTotal)}đ</td>
+        <td style="text-align:center;">
+            <button class="remove-btn" onclick="_removePointsRow();">Xóa</button>
+        </td>`;
+
+    body.appendChild(tr);
+    updateSummary();
 }
