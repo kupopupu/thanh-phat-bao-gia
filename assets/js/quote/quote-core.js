@@ -219,7 +219,7 @@ function saveCurrentQuote(optionalData) {
         createdAt,
     };
 
-    // Compute loyalty points for this quote (1 point per 100.000 VND)
+    // Compute loyalty points for this quote (1 point per 200.000 VND)
     // pointsEarned     = điểm dự kiến của báo giá này
     // pointsTotalAtSave = tổng điểm đã ghi nhận từ đơn COMPLETED (không tính đơn này trừ khi completed)
     try {

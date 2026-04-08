@@ -201,7 +201,7 @@ function generateQuoteHTMLFullWidth() {
             </div>
             <div style="margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
               <div style="flex:1;min-width:160px;"><strong>Địa chỉ:</strong> ${escapeHtml(customerAddress)}</div>
-              <div style="min-width:160px;text-align:right;font-size:11px;color:#555;font-style:italic;">* bạn sẽ được tích 1 điểm với mỗi 100.000đ sau khi thanh toán</div>
+              <div style="min-width:160px;text-align:right;font-size:11px;color:#555;font-style:italic;">* bạn sẽ được tích 1 điểm với mỗi 200.000đ sau khi thanh toán</div>
             </div>
           </div>
         </div>
