@@ -50,9 +50,9 @@ function finalizeQuoteNumber() {
         if (window.editingQuoteId) {
             const assigned = window.editingQuoteId;
             saveCurrentQuote({ id: assigned });
-            window.quoteNumber = generateQuoteNumber();
+            quoteNumber = generateQuoteNumber();
             const disp = document.getElementById('currentQuoteDisplay');
-            if (disp) disp.textContent = window.quoteNumber;
+            if (disp) disp.textContent = quoteNumber;
             showNotification('✅ Đã lưu thay đổi cho báo giá: ' + assigned);
             if (typeof closeQuoteFormModal === 'function') closeQuoteFormModal();
             if (typeof renderQuoteList     === 'function') renderQuoteList();
@@ -63,9 +63,9 @@ function finalizeQuoteNumber() {
         const assigned = incrementQuoteSeqAndGet();
         saveCurrentQuote({ id: assigned });
 
-        window.quoteNumber = generateQuoteNumber();
+        quoteNumber = generateQuoteNumber();
         const disp = document.getElementById('currentQuoteDisplay');
-        if (disp) disp.textContent = window.quoteNumber;
+        if (disp) disp.textContent = quoteNumber;
 
         const btn = document.getElementById('finalizeQuoteBtn');
         if (btn) {
@@ -94,7 +94,7 @@ function finalizeQuoteNumber() {
  * @returns {object}  The saved quote summary
  */
 function saveCurrentQuote(optionalData) {
-    const id = (optionalData && optionalData.id) || window.quoteNumber || ('BG' + Date.now());
+    const id = (optionalData && optionalData.id) || quoteNumber || ('BG' + Date.now());
     loadSavedQuotes();
     const existingQuote = savedQuotes.find(q => q.id === id) || null;
 
@@ -339,7 +339,7 @@ function loadQuoteIntoForm(id) {
         if (!q) { alert('Không tìm thấy báo giá: ' + id); return; }
 
         window.editingQuoteId = q.id;
-        window.quoteNumber    = q.id;
+        quoteNumber           = q.id;
         const disp = document.getElementById('currentQuoteDisplay');
         if (disp) disp.textContent = q.id;
 
