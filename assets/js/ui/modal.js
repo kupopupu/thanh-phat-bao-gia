@@ -406,7 +406,11 @@ function exportJPGSavedQuote(quoteId) {
     const q = savedQuotes.find(q => q.id === quoteId);
     window._quoteExportCtx = q ? { orderStatus: q.orderStatus || 'pending', depositAmount: q.depositAmount || 0 } : null;
     loadQuoteIntoForm(quoteId);
+    // Tạm ghi đè quoteNumber bằng mã thực của báo giá đang xuất
+    const prevQuoteNumber = window.quoteNumber;
+    window.quoteNumber = quoteId;
     if (typeof exportQuoteAsJPG === 'function') exportQuoteAsJPG();
+    window.quoteNumber = prevQuoteNumber;
     window._quoteExportCtx = null;
 }
 
