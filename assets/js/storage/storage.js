@@ -27,7 +27,9 @@ function _syncQuoteToAPI(quote) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(quote),
-    }).catch(() => {/* silent */});
+    }).then(function(r) {
+        if (!r.ok) r.text().then(t => console.warn('[DB] syncQuote failed:', r.status, t));
+    }).catch(function(e) { console.warn('[DB] syncQuote error:', e.message); });
 }
 
 /**
@@ -50,7 +52,9 @@ function _syncCustomerToAPI(customer) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(customer),
-    }).catch(() => {/* silent */});
+    }).then(function(r) {
+        if (!r.ok) r.text().then(t => console.warn('[DB] syncCustomer failed:', r.status, t));
+    }).catch(function(e) { console.warn('[DB] syncCustomer error:', e.message); });
 }
 
 // ---- Product Catalog ----------------------------------------
@@ -149,7 +153,7 @@ function initApiSync() {
                 if (typeof renderDashboardStats === 'function') renderDashboardStats();
             }
         })
-        .catch(() => {/* silent — app vẫn dùng localStorage */});
+        .catch(function(e) { console.warn('[DB] load quotes error:', e); });
     // Customers
     fetch('/api/customers')
         .then(r => r.ok ? r.json() : Promise.reject(r.status))
@@ -164,7 +168,7 @@ function initApiSync() {
             });
             persistSavedCustomersLocalOnly();
         })
-        .catch(() => {/* silent */});
+        .catch(function(e) { console.warn('[DB] load customers error:', e); });
 }
 
 // ---- Quotes ------------------------------------------------
@@ -207,7 +211,9 @@ function persistSavedQuotes() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(savedQuotes || []),
-            }).catch(function () { /* silent */ });
+            }).then(function(r) {
+                if (!r.ok) r.text().then(t => console.warn('[DB] fullSync failed:', r.status, t));
+            }).catch(function(e) { console.warn('[DB] fullSync error:', e.message); });
         }, 1500);
     }
 }
