@@ -41,6 +41,17 @@ CREATE TABLE IF NOT EXISTS customers (
 
 CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone);
 
+-- ── Bảng danh mục sản phẩm ───────────────────────────────
+CREATE TABLE IF NOT EXISTS products (
+    name       TEXT        PRIMARY KEY,
+    unit       TEXT        NOT NULL DEFAULT '',
+    price      BIGINT      NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_products_name ON products(name);
+
 -- ── View: thống kê theo tháng (tiện cho báo cáo) ──────────
 CREATE OR REPLACE VIEW monthly_stats AS
 SELECT

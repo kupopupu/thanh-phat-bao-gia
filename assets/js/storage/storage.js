@@ -57,6 +57,30 @@ function _syncCustomerToAPI(customer) {
     }).catch(function(e) { console.warn('[DB] syncCustomer error:', e.message); });
 }
 
+/**
+ * Đồng bộ 1 sản phẩm lên DB (fire & forget).
+ */
+function _syncProductToAPI(product) {
+    if (!_hasApiBackend() || !product || !product.name) return;
+    fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(product),
+    }).then(function(r) {
+        if (!r.ok) r.text().then(t => console.warn('[DB] syncProduct failed:', r.status, t));
+    }).catch(function(e) { console.warn('[DB] syncProduct error:', e.message); });
+}
+
+/**
+ * Xóa 1 sản phẩm khỏi DB.
+ */
+function _deleteProductFromAPI(name) {
+    if (!_hasApiBackend() || !name) return;
+    fetch('/api/products?name=' + encodeURIComponent(name), {
+        method: 'DELETE',
+    }).catch(() => {/* silent */});
+}
+
 // ---- Product Catalog ----------------------------------------
 
 function loadSavedProducts() {
@@ -68,8 +92,22 @@ function loadSavedProducts() {
     }
 }
 
+let _productSyncTimer = null;
 function persistSavedProducts() {
     try { localStorage.setItem(SAVED_PRODUCTS_KEY, JSON.stringify(savedProducts || [])); } catch (e) { }
+    // Debounced bulk-sync lên API (2 giây sau lần cuối)
+    if (_hasApiBackend()) {
+        clearTimeout(_productSyncTimer);
+        _productSyncTimer = setTimeout(function () {
+            fetch('/api/products?bulk=1', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(savedProducts || []),
+            }).then(function(r) {
+                if (!r.ok) r.text().then(t => console.warn('[DB] products bulkSync failed:', r.status, t));
+            }).catch(function(e) { console.warn('[DB] products bulkSync error:', e.message); });
+        }, 2000);
+    }
 }
 
 /**
@@ -101,6 +139,8 @@ function upsertProduct(name, unit, price) {
         }
         savedProducts.sort((a, b) => a.name.localeCompare(b.name, 'vi'));
         persistSavedProducts();
+        // Sync ngay lập tức sản phẩm vừa thêm/cập nhật
+        _syncProductToAPI(entry);
     } catch (e) {
         console.error('upsertProduct error', e);
     }
@@ -116,6 +156,7 @@ function deleteProduct(name) {
         loadSavedProducts();
         savedProducts = savedProducts.filter(p => p.name !== n);
         persistSavedProducts();
+        _deleteProductFromAPI(n);
     } catch (e) {
         console.error('deleteProduct error', e);
     }
@@ -169,6 +210,31 @@ function initApiSync() {
             persistSavedCustomersLocalOnly();
         })
         .catch(function(e) { console.warn('[DB] load customers error:', e); });
+
+    // Products
+    fetch('/api/products')
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(apiProducts => {
+            if (!Array.isArray(apiProducts)) return;
+            loadSavedProducts();
+            const localMap = Object.fromEntries(savedProducts.map(p => [p.name, p]));
+            let changed = false;
+            apiProducts.forEach(ap => {
+                const lp = localMap[ap.name];
+                if (!lp || (ap.updatedAt > (lp.updatedAt || lp.createdAt || ''))) {
+                    localMap[ap.name] = ap;
+                    changed = true;
+                }
+            });
+            if (changed) {
+                savedProducts = Object.values(localMap)
+                    .sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+                try { localStorage.setItem(SAVED_PRODUCTS_KEY, JSON.stringify(savedProducts)); } catch (e) { }
+                // Cập nhật dropdown sản phẩm nếu đang mở
+                if (typeof refreshProductDropdowns === 'function') refreshProductDropdowns();
+            }
+        })
+        .catch(function(e) { console.warn('[DB] load products error:', e); });
 }
 
 // ---- Quotes ------------------------------------------------

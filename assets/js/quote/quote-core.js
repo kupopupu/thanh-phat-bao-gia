@@ -217,6 +217,7 @@ function saveCurrentQuote(optionalData) {
         receivedAmount: nextReceivedAmount,
         balance,
         createdAt,
+        savedAt: createdAt,  // savedAt = thời điểm lưu, dùng để so sánh khi merge DB
     };
 
     // Compute loyalty points for this quote (1 point per 200.000 VND)

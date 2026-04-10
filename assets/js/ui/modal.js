@@ -309,6 +309,8 @@ function patchSavedQuote(id, fields) {
     const idx = savedQuotes.findIndex(q => q.id === id);
     if (idx === -1) return null;
     Object.assign(savedQuotes[idx], fields);
+    // Luôn cập nhật savedAt để máy khác biết đây là phiên bản mới nhất
+    savedQuotes[idx].savedAt = new Date().toISOString();
     persistSavedQuotes();
     return savedQuotes[idx];
 }
@@ -346,7 +348,6 @@ function confirmOrderWithDeposit(quoteId, hasDeposit) {
             depositAmount:    depositAmt,
             receivedAmount:   depositAmt,
             depositDisabled:  false,
-            savedAt:          q.savedAt || q.createdAt,
         });
     } else {
         patchSavedQuote(quoteId, {
@@ -355,7 +356,6 @@ function confirmOrderWithDeposit(quoteId, hasDeposit) {
             depositAmount:    0,
             receivedAmount:   0,
             depositDisabled:  true,
-            savedAt:          q.savedAt || q.createdAt,
         });
     }
 
@@ -406,11 +406,7 @@ function exportJPGSavedQuote(quoteId) {
     const q = savedQuotes.find(q => q.id === quoteId);
     window._quoteExportCtx = q ? { orderStatus: q.orderStatus || 'pending', depositAmount: q.depositAmount || 0 } : null;
     loadQuoteIntoForm(quoteId);
-    // Tạm ghi đè quoteNumber bằng mã thực của báo giá đang xuất
-    const prevQuoteNumber = window.quoteNumber;
-    window.quoteNumber = quoteId;
     if (typeof exportQuoteAsJPG === 'function') exportQuoteAsJPG();
-    window.quoteNumber = prevQuoteNumber;
     window._quoteExportCtx = null;
 }
 
