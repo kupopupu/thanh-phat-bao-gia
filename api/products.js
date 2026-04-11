@@ -82,14 +82,18 @@ module.exports = async function handler(req, res) {
                 return res.status(200).json({ ok: true, count: body.length });
             }
 
-            // Single upsert
+            // Single upsert: return the saved product object (including generated `code`)
             if (!body || !body.name) return res.status(400).json({ error: 'Missing name' });
             await pool.query(UPSERT_SQL, [
                 body.name.trim(),
                 body.unit  || '',
                 Number(body.price) || 0,
             ]);
-            return res.status(200).json({ ok: true });
+            // Fetch the saved row to return full object (including code)
+            const { rows } = await pool.query('SELECT * FROM products WHERE name = $1', [body.name.trim()]);
+            if (!rows || !rows.length) return res.status(200).json({ ok: true });
+            const prod = rows[0];
+            return res.status(200).json({ ok: true, product: rowToProduct(prod) });
         }
 
         return res.status(405).json({ error: 'Method not allowed' });

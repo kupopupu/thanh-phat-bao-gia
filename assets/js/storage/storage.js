@@ -67,7 +67,26 @@ function _syncProductToAPI(product) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(product),
     }).then(function(r) {
-        if (!r.ok) r.text().then(t => console.warn('[DB] syncProduct failed:', r.status, t));
+        if (!r.ok) {
+            r.text().then(t => console.warn('[DB] syncProduct failed:', r.status, t));
+            return;
+        }
+        // Try to capture returned product (with code) and persist locally
+        try {
+            r.json().then(function(body) {
+                if (body && body.product && body.product.name) {
+                    try {
+                        loadSavedProducts();
+                        const idx = savedProducts.findIndex(p => p.name === body.product.name);
+                        const entry = Object.assign({}, savedProducts[idx] || {}, body.product);
+                        if (idx !== -1) savedProducts[idx] = entry; else savedProducts.unshift(entry);
+                        try { localStorage.setItem(SAVED_PRODUCTS_KEY, JSON.stringify(savedProducts || [])); } catch (e) { }
+                        if (typeof refreshProductDropdowns === 'function') refreshProductDropdowns();
+                        if (typeof renderProductPage === 'function') renderProductPage('');
+                    } catch (e) { /* silent */ }
+                }
+            }).catch(function() { /* ignore JSON parse errors */ });
+        } catch (e) { }
     }).catch(function(e) { console.warn('[DB] syncProduct error:', e.message); });
 }
 
