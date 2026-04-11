@@ -1,0 +1,110 @@
+/* =============================================
+   TABLE.CSS  –  Items table & row controls
+   ============================================= */
+
+.items-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.items-table th {
+    padding: 11px 8px;
+    background: #edf5fd;
+    color: #244d72;
+    font-size: 12px;
+    font-weight: 700;
+    border-bottom: 1px solid #d6e5f4;
+}
+
+.items-table td {
+    padding: 8px 6px;
+    border-bottom: 1px solid #edf2f7;
+    text-align: center;
+}
+
+.items-table tr:last-child td {
+    border-bottom: none;
+}
+
+.items-table td:nth-child(2) {
+    text-align: left;
+}
+
+/* Product name col stretches to fill available space */
+.items-table .product-name-cell input {
+    min-width: 0;
+    width: 100%;
+}
+
+/* Discount cell: subtle orange tint to distinguish from price */
+.items-table .discount-cell input,
+.items-table .discount-cell .discount-input {
+    color: #c0550e;
+    background: #fff8f2 !important;
+    border-color: #f5c49a !important;
+    text-align: right;
+}
+
+/* Row total: bold, right-aligned */
+.items-table .row-total {
+    font-weight: 700;
+    color: #0d5c92;
+    text-align: right;
+    white-space: nowrap;
+    padding-right: 10px;
+}
+
+/* Compact inputs for unit and quantity columns (very short content) */
+.items-table .unit-cell input,
+.items-table td:nth-child(4) input {
+    width: 90px !important;
+    max-width: 90px !important;
+    padding: 9px 8px !important;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.items-table .unit-cell input::placeholder,
+.items-table td:nth-child(4) input::placeholder {
+    opacity: 0.6;
+    font-size: 13px;
+}
+
+/* ---- Row action buttons ---- */
+.add-row-btn,
+.remove-btn {
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.2s ease;
+}
+
+.add-row-btn {
+    margin-top: 10px;
+    padding: 9px 15px;
+    border-radius: 999px;
+    background: linear-gradient(120deg, var(--primary), #2d90cf);
+    color: #fff;
+}
+
+.add-row-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 16px rgba(11, 111, 181, 0.26);
+}
+
+.remove-btn {
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: #fceff0;
+    color: #b5323f;
+    border-color: #f1c9ce;
+}
+
+.remove-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}

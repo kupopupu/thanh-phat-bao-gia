@@ -1,0 +1,30 @@
+/* ===================================================
+   MODAL.CSS  –  Overlay backdrops & modal containers
+   =================================================== */
+
+#previewModal,
+#deliveryPreviewModal,
+#finalizePreviewModal,
+#quoteListModal,
+#printInfoModal {
+    backdrop-filter: blur(4px);
+}
+
+#previewModal > div,
+#deliveryPreviewModal > div,
+#finalizePreviewModal > div,
+#quoteListModal > div,
+#printInfoModal > div {
+    border-radius: 16px !important;
+    border: 1px solid #d8e3ef;
+    overflow: hidden;
+}
+
+/* Gradient modal headers */
+#previewModal [style*="background: #1D75AE"],
+#deliveryPreviewModal [style*="background: #1D75AE"],
+#finalizePreviewModal [style*="background: #1D75AE"],
+#quoteListModal [style*="background: #1D75AE"],
+#printInfoModal [style*="background: #1D75AE"] {
+    background: linear-gradient(120deg, #0f4873, #0b6fb5) !important;
+}
