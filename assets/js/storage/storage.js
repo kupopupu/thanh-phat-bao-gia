@@ -288,6 +288,39 @@ function initApiSync() {
         .catch(function(e) { console.warn('[DB] load products error:', e); });
 }
 
+/**
+ * Force-fetch products from API and merge into local catalog.
+ * Exposed for manual sync when running locally or debugging.
+ */
+function fetchProductsNow() {
+    fetch('/api/products')
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(apiProducts => {
+            if (!Array.isArray(apiProducts)) return;
+            loadSavedProducts();
+            const localMap = Object.fromEntries(savedProducts.map(p => [p.name, p]));
+            let changed = false;
+            apiProducts.forEach(ap => {
+                const lp = localMap[ap.name];
+                if (!lp || (ap.updatedAt > (lp.updatedAt || lp.createdAt || ''))) {
+                    localMap[ap.name] = ap;
+                    changed = true;
+                }
+            });
+            if (changed) {
+                savedProducts = Object.values(localMap)
+                    .sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+                try { localStorage.setItem(SAVED_PRODUCTS_KEY, JSON.stringify(savedProducts)); } catch (e) { }
+                if (typeof refreshProductDropdowns === 'function') refreshProductDropdowns();
+                if (typeof renderProductPage === 'function') renderProductPage('');
+            }
+        })
+        .catch(function(e) { console.warn('[DB] fetchProductsNow error:', e); });
+}
+
+// Expose for manual use from console/UI
+window.fetchProductsNow = fetchProductsNow;
+
 // ---- Quotes ------------------------------------------------
 
 function loadSavedQuotes() {
