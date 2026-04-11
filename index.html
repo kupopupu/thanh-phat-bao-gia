@@ -267,7 +267,7 @@ Thanh Phát Webapp copy    <script src="https://cdnjs.cloudflare.com/ajax/libs/h
         .pl-title  { margin:0; font-size:20px; font-weight:800; color:#0d5c92; flex:1; }
         .pl-count  { font-size:13px; color:#888; white-space:nowrap; }
         .pl-search-bar { margin-bottom:14px; }
-        .pl-search-bar input { width:100%; box-sizing:border-box; padding:10px 16px;
+        .pl-search-bar input { width:100%; max-width:640px; box-sizing:border-box; padding:10px 16px;
                                border-radius:999px; border:1px solid #c8d8e8;
                                font-size:13px; font-family:inherit; background:#fff; }
         .pl-table { width:100%; border-collapse:collapse; font-size:13px; min-width:750px; table-layout:fixed; }
@@ -398,12 +398,19 @@ Thanh Phát Webapp copy    <script src="https://cdnjs.cloudflare.com/ajax/libs/h
                     <button class="cp-back-btn" onclick="showDashboard()">&#8592; Quay lại</button>
                     <h2 class="pl-title">📦 Danh sách Sản Phẩm</h2>
                     <span id="plProductCount" class="pl-count"></span>
-                    <button style="margin-left:12px;padding:6px 10px;" onclick="fetchProductsNow()">🔄 Đồng bộ</button>
                 </div>
                 <div class="pl-search-bar">
                     <input id="plSearch" type="text"
                         placeholder="🔍 Tìm theo tên sản phẩm hoặc đơn vị…"
                         oninput="renderProductPage(this.value)">
+                </div>
+                <div class="pl-controls" style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                    <div style="flex:1"></div>
+                    <div id="plPager" style="display:flex;gap:8px;align-items:center;">
+                        <button id="plPrevBtn" class="btn" onclick="plPrevPage()" style="padding:6px 10px;border-radius:8px;">◀</button>
+                        <div id="plPagerIndicator" style="font-weight:700;color:#0d5c92;">1/1</div>
+                        <button id="plNextBtn" class="btn" onclick="plNextPage()" style="padding:6px 10px;border-radius:8px;">▶</button>
+                    </div>
                 </div>
                 <div id="productPageContent" style="overflow-x:auto;">
                     <!-- populated by renderProductPage() -->

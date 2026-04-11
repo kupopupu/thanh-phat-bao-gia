@@ -675,9 +675,12 @@ function _buildProductStats() {
 
 let _plAllData    = [];
 let _plSearchTerm = '';
+let _plPage = 1;
+const _plPageSize = 10;
 
-function renderProductPage(searchTerm) {
+function renderProductPage(searchTerm, page) {
     _plSearchTerm = (searchTerm || '').toLowerCase().trim();
+    _plPage = (typeof page === 'number' && page >= 1) ? Math.floor(page) : (_plPage || 1);
     loadSavedProducts();
     const stats = _buildProductStats();
     const fmt   = v => new Intl.NumberFormat('vi-VN').format(v);
@@ -699,15 +702,24 @@ function renderProductPage(searchTerm) {
             <div style="font-size:48px;margin-bottom:12px;">📦</div>
             <p>${_plSearchTerm ? 'Không tìm thấy sản phẩm phù hợp.' : 'Chưa có sản phẩm nào trong danh mục. Hãy lập báo giá để tự động thêm sản phẩm!'}</p>
         </div>`;
+        // update pager
+        updatePager(1,1);
         return;
     }
 
-    const rows = filtered.map(function(p, i) {
+    const totalPages = Math.max(1, Math.ceil(filtered.length / _plPageSize));
+    if (!_plPage || _plPage < 1) _plPage = 1;
+    if (_plPage > totalPages) _plPage = totalPages;
+
+    const startIndex = (_plPage - 1) * _plPageSize;
+    const pageItems = filtered.slice(startIndex, startIndex + _plPageSize);
+
+    const rows = pageItems.map(function(p, idx) {
+        const i = startIndex + idx;
         const s      = stats[p.name] || { qty: 0, revenue: 0 };
         const safeN  = escapeHtml(p.name);
         const safeU  = escapeHtml(p.unit || '');
         const safeC  = escapeHtml(p.code || '');
-        // Escape backslashes then single-quotes so onclick='...' is valid HTML
         const nameJS = p.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         return `<tr>
             <td style="text-align:center;color:#888;">${i + 1}</td>
@@ -737,7 +749,22 @@ function renderProductPage(searchTerm) {
         </tr></thead>
         <tbody>${rows}</tbody>
     </table>`;
+
+    updatePager(_plPage, totalPages);
 }
+
+function updatePager(page, totalPages) {
+    const ind = document.getElementById('plPagerIndicator');
+    if (ind) ind.textContent = (page || 1) + '/' + (totalPages || 1);
+    const prev = document.getElementById('plPrevBtn');
+    const next = document.getElementById('plNextBtn');
+    if (prev) prev.disabled = (page <= 1);
+    if (next) next.disabled = (page >= totalPages);
+}
+
+function plPrevPage() { if (_plPage > 1) { _plPage--; renderProductPage(_plSearchTerm, _plPage); } }
+function plNextPage() { _plPage++; renderProductPage(_plSearchTerm, _plPage); }
+window.plPrevPage = plPrevPage; window.plNextPage = plNextPage;
 
 function showProductList() {
     loadSavedProducts();
@@ -755,7 +782,8 @@ function showProductList() {
 
     const s = document.getElementById('plSearch');
     if (s) s.value = '';
-    renderProductPage('');
+    _plPage = 1;
+    renderProductPage('', 1);
 }
 
 /** Mở form sửa sản phẩm (inline mini-modal) */
