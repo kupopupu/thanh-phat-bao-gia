@@ -70,7 +70,7 @@ BEGIN
         UPDATE products SET code = ('SP' || lpad(nextval('products_seq')::text,5,'0')) WHERE name = _name;
     END LOOP;
     -- Set sequence to current max numeric part (or 0)
-    PERFORM setval('products_seq', COALESCE((SELECT MAX((regexp_replace(code, '\\D', '', 'g'))::bigint) FROM products), 0));
+    PERFORM setval('products_seq', COALESCE((SELECT MAX((regexp_replace(code, '[^0-9]', '', 'g'))::bigint) FROM products WHERE code IS NOT NULL), 0));
 END$$;
 
 -- ── View: thống kê theo tháng (tiện cho báo cáo) ──────────
