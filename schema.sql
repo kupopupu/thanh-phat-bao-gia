@@ -52,10 +52,13 @@ CREATE TABLE IF NOT EXISTS products (
 );
 
 CREATE INDEX IF NOT EXISTS idx_products_name ON products(name);
-
 -- Ensure products have a stable unique code (SP00001...) and sequence for future inserts
+-- Add column if missing (for existing DBs created before this change)
+ALTER TABLE products ADD COLUMN IF NOT EXISTS code TEXT UNIQUE;
+
 CREATE SEQUENCE IF NOT EXISTS products_seq START 1;
 
+-- Set default generation for new rows
 ALTER TABLE products ALTER COLUMN code SET DEFAULT ('SP' || lpad(nextval('products_seq')::text,5,'0'));
 
 -- Assign codes to existing products that don't have one yet, and advance sequence
@@ -66,6 +69,7 @@ BEGIN
     FOR _name IN SELECT name FROM products WHERE code IS NULL LOOP
         UPDATE products SET code = ('SP' || lpad(nextval('products_seq')::text,5,'0')) WHERE name = _name;
     END LOOP;
+    -- Set sequence to current max numeric part (or 0)
     PERFORM setval('products_seq', COALESCE((SELECT MAX((regexp_replace(code, '\\D', '', 'g'))::bigint) FROM products), 0));
 END$$;
 
