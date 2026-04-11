@@ -67,26 +67,7 @@ function _syncProductToAPI(product) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(product),
     }).then(function(r) {
-        if (!r.ok) {
-            r.text().then(t => console.warn('[DB] syncProduct failed:', r.status, t));
-            return;
-        }
-        // Try to capture returned product (with code) and persist locally
-        try {
-            r.json().then(function(body) {
-                if (body && body.product && body.product.name) {
-                    try {
-                        loadSavedProducts();
-                        const idx = savedProducts.findIndex(p => p.name === body.product.name);
-                        const entry = Object.assign({}, savedProducts[idx] || {}, body.product);
-                        if (idx !== -1) savedProducts[idx] = entry; else savedProducts.unshift(entry);
-                        try { localStorage.setItem(SAVED_PRODUCTS_KEY, JSON.stringify(savedProducts || [])); } catch (e) { }
-                        if (typeof refreshProductDropdowns === 'function') refreshProductDropdowns();
-                        if (typeof renderProductPage === 'function') renderProductPage('');
-                    } catch (e) { /* silent */ }
-                }
-            }).catch(function() { /* ignore JSON parse errors */ });
-        } catch (e) { }
+        if (!r.ok) r.text().then(t => console.warn('[DB] syncProduct failed:', r.status, t));
     }).catch(function(e) { console.warn('[DB] syncProduct error:', e.message); });
 }
 
@@ -273,7 +254,12 @@ function initApiSync() {
             apiProducts.forEach(ap => {
                 const lp = localMap[ap.name];
                 if (!lp || (ap.updatedAt > (lp.updatedAt || lp.createdAt || ''))) {
+                    // API wins on newer timestamp
                     localMap[ap.name] = ap;
+                    changed = true;
+                } else if (ap.code && !lp.code) {
+                    // Local entry exists but missing code → patch code from API
+                    localMap[ap.name] = Object.assign({}, lp, { code: ap.code });
                     changed = true;
                 }
             });
@@ -283,43 +269,15 @@ function initApiSync() {
                 try { localStorage.setItem(SAVED_PRODUCTS_KEY, JSON.stringify(savedProducts)); } catch (e) { }
                 // Cập nhật dropdown sản phẩm nếu đang mở
                 if (typeof refreshProductDropdowns === 'function') refreshProductDropdowns();
+                // Nếu đang xem trang danh sách sản phẩm thì re-render
+                if (typeof _plAllData !== 'undefined' && typeof renderProductPage === 'function') {
+                    _plAllData = savedProducts.slice();
+                    renderProductPage(typeof _plSearchTerm !== 'undefined' ? _plSearchTerm : '');
+                }
             }
         })
         .catch(function(e) { console.warn('[DB] load products error:', e); });
 }
-
-/**
- * Force-fetch products from API and merge into local catalog.
- * Exposed for manual sync when running locally or debugging.
- */
-function fetchProductsNow() {
-    fetch('/api/products')
-        .then(r => r.ok ? r.json() : Promise.reject(r.status))
-        .then(apiProducts => {
-            if (!Array.isArray(apiProducts)) return;
-            loadSavedProducts();
-            const localMap = Object.fromEntries(savedProducts.map(p => [p.name, p]));
-            let changed = false;
-            apiProducts.forEach(ap => {
-                const lp = localMap[ap.name];
-                if (!lp || (ap.updatedAt > (lp.updatedAt || lp.createdAt || ''))) {
-                    localMap[ap.name] = ap;
-                    changed = true;
-                }
-            });
-            if (changed) {
-                savedProducts = Object.values(localMap)
-                    .sort((a, b) => a.name.localeCompare(b.name, 'vi'));
-                try { localStorage.setItem(SAVED_PRODUCTS_KEY, JSON.stringify(savedProducts)); } catch (e) { }
-                if (typeof refreshProductDropdowns === 'function') refreshProductDropdowns();
-                if (typeof renderProductPage === 'function') renderProductPage('');
-            }
-        })
-        .catch(function(e) { console.warn('[DB] fetchProductsNow error:', e); });
-}
-
-// Expose for manual use from console/UI
-window.fetchProductsNow = fetchProductsNow;
 
 // ---- Quotes ------------------------------------------------
 
