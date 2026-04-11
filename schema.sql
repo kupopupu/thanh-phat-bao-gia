@@ -46,11 +46,28 @@ CREATE TABLE IF NOT EXISTS products (
     name       TEXT        PRIMARY KEY,
     unit       TEXT        NOT NULL DEFAULT '',
     price      BIGINT      NOT NULL DEFAULT 0,
+    code       TEXT        UNIQUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_products_name ON products(name);
+
+-- Ensure products have a stable unique code (SP00001...) and sequence for future inserts
+CREATE SEQUENCE IF NOT EXISTS products_seq START 1;
+
+ALTER TABLE products ALTER COLUMN code SET DEFAULT ('SP' || lpad(nextval('products_seq')::text,5,'0'));
+
+-- Assign codes to existing products that don't have one yet, and advance sequence
+DO $$
+DECLARE
+    _name TEXT;
+BEGIN
+    FOR _name IN SELECT name FROM products WHERE code IS NULL LOOP
+        UPDATE products SET code = ('SP' || lpad(nextval('products_seq')::text,5,'0')) WHERE name = _name;
+    END LOOP;
+    PERFORM setval('products_seq', COALESCE((SELECT MAX((regexp_replace(code, '\\D', '', 'g'))::bigint) FROM products), 0));
+END$$;
 
 -- ── View: thống kê theo tháng (tiện cho báo cáo) ──────────
 CREATE OR REPLACE VIEW monthly_stats AS

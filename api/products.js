@@ -24,6 +24,7 @@ const UPSERT_SQL = `
 
 function rowToProduct(r) {
     return {
+        code:      r.code       || '',
         name:      r.name       || '',
         unit:      r.unit       || '',
         price:     Number(r.price) || 0,
