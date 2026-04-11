@@ -706,10 +706,12 @@ function renderProductPage(searchTerm) {
         const s      = stats[p.name] || { qty: 0, revenue: 0 };
         const safeN  = escapeHtml(p.name);
         const safeU  = escapeHtml(p.unit || '');
+        const safeC  = escapeHtml(p.code || '');
         // Escape backslashes then single-quotes so onclick='...' is valid HTML
         const nameJS = p.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         return `<tr>
             <td style="text-align:center;color:#888;">${i + 1}</td>
+            <td style="text-align:center;color:#666;">${safeC}</td>
             <td class="pl-td-name" style="font-weight:600;" title="${safeN}">${safeN}</td>
             <td class="pl-td-unit">${safeU}</td>
             <td style="text-align:right;color:#0d5c92;font-weight:700;">${fmt(p.price)}đ</td>
@@ -725,7 +727,8 @@ function renderProductPage(searchTerm) {
     ct.innerHTML = `<table class="pl-table">
         <thead><tr>
             <th style="width:42px;text-align:center;">#</th>
-            <th style="width:380px;">Tên sản phẩm</th>
+            <th style="width:120px;text-align:center;">Mã</th>
+            <th style="width:320px;">Tên sản phẩm</th>
             <th style="width:80px;">ĐVT</th>
             <th style="width:130px;text-align:right;">Đơn giá</th>
             <th style="width:100px;text-align:right;">SL đã bán</th>
@@ -768,6 +771,8 @@ function openEditProduct(productName) {
     document.getElementById('epPrice').value = p.price > 0 ? new Intl.NumberFormat('vi-VN').format(p.price) : '';
     document.getElementById('epPrice').dataset.raw = String(p.price || 0);
     document.getElementById('epOrigName').value = p.name;
+    const codeEl = document.getElementById('epCode');
+    if (codeEl) codeEl.value = p.code || '';
     modal.style.display = 'flex';
 }
 

@@ -127,11 +127,14 @@ function upsertProduct(name, unit, price) {
             name: n,
             unit: (unit || '').trim(),
             price: parseFloat(price) || 0,
+            code: undefined,
             updatedAt: new Date().toISOString(),
         };
         if (idx !== -1) {
             // Preserve createdAt; only update unit/price if provided
             entry.createdAt = savedProducts[idx].createdAt || entry.updatedAt;
+            // Preserve existing code if present
+            if (savedProducts[idx].code) entry.code = savedProducts[idx].code;
             savedProducts[idx] = entry;
         } else {
             entry.createdAt = entry.updatedAt;
