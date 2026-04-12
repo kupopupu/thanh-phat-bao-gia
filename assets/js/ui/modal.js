@@ -312,6 +312,9 @@ function patchSavedQuote(id, fields) {
     // Luôn cập nhật savedAt để máy khác biết đây là phiên bản mới nhất
     savedQuotes[idx].savedAt = new Date().toISOString();
     persistSavedQuotes();
+    // Đồng bộ ngay lập tức lên API (single-quote upsert, không dùng fullSync)
+    // để máy khác nhận được cập nhật trạng thái sớm nhất có thể
+    if (typeof _syncQuoteToAPI === 'function') _syncQuoteToAPI(savedQuotes[idx]);
     return savedQuotes[idx];
 }
 
@@ -417,10 +420,9 @@ function exportJPGSavedQuote(quoteId) {
  * @param {string} quoteId
  */
 function recallOrderStatus(quoteId) {
-    const saved = JSON.parse(localStorage.getItem('savedQuotes') || '[]');
-    const idx = saved.findIndex(q => (q.id || q.quoteNumber) === quoteId);
-    if (idx === -1) return;
-    const q = saved[idx];
+    loadSavedQuotes();
+    const q = savedQuotes.find(q => (q.id || q.quoteNumber) === quoteId);
+    if (!q) return;
     const status = q.orderStatus || 'pending';
     let prevStatus;
     if (status === 'completed') {
@@ -432,17 +434,18 @@ function recallOrderStatus(quoteId) {
     }
     const label = { pending: 'Chưa XN', deposited: 'Đã cọc', no_deposit: 'Không cọc', completed: 'Hoàn thành' };
     if (!confirm(`Hoàn tác "${label[status]}" → "${label[prevStatus]}"?`)) return;
-    saved[idx].orderStatus = prevStatus;
+    const patchFields = { orderStatus: prevStatus };
     if (prevStatus === 'pending') {
-        delete saved[idx].depositAmount;
-        delete saved[idx].receivedAmount;
-        delete saved[idx].depositDisabled;
-        delete saved[idx].paid;
+        patchFields.depositAmount   = 0;
+        patchFields.receivedAmount  = 0;
+        patchFields.depositDisabled = false;
+        patchFields.paid            = false;
     } else if (prevStatus === 'deposited' || prevStatus === 'no_deposit') {
-        saved[idx].receivedAmount = 0;
-        delete saved[idx].paid;
+        patchFields.receivedAmount = 0;
+        patchFields.paid           = false;
     }
-    localStorage.setItem('savedQuotes', JSON.stringify(saved));
+    // Dùng patchSavedQuote để cập nhật đúng key localStorage và sync lên API
+    patchSavedQuote(quoteId, patchFields);
     renderQuoteList(document.getElementById('mainQuoteSearch')?.value || '');
     renderDashboardStats();
 }

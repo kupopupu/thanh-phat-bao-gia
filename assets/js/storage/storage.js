@@ -170,6 +170,38 @@ function deleteProduct(name) {
  * Tải dữ liệu từ API về rồi merge vào localStorage (API wins cho conflict).
  * Sau khi merge xong, refresh UI nếu có.
  */
+/**
+ * Pull latest quotes từ API và merge vào localStorage / UI.
+ * Được gọi khi khởi động và định kỳ mỗi 30 giây để máy B nhận
+ * các thay đổi (confirm, thu tiền...) mà máy A vừa thực hiện.
+ */
+function _pullAndMergeQuotes() {
+    fetch('/api/quotes')
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(function(apiQuotes) {
+            if (!Array.isArray(apiQuotes)) return;
+            loadSavedQuotes();
+            const localMap = Object.fromEntries(savedQuotes.map(q => [q.id, q]));
+            let changed = false;
+            apiQuotes.forEach(function(aq) {
+                const lq = localMap[aq.id];
+                if (!lq || (aq.savedAt > (lq.savedAt || lq.createdAt || ''))) {
+                    localMap[aq.id] = aq;
+                    changed = true;
+                }
+            });
+            if (changed) {
+                savedQuotes = Object.values(localMap)
+                    .sort((a, b) => (b.savedAt || b.createdAt || '') > (a.savedAt || a.createdAt || '') ? 1 : -1)
+                    .slice(0, 200);
+                persistSavedQuotesLocalOnly();
+                if (typeof renderQuoteList     === 'function') renderQuoteList(document.getElementById('mainQuoteSearch')?.value || '');
+                if (typeof renderDashboardStats === 'function') renderDashboardStats();
+            }
+        })
+        .catch(function(e) { console.warn('[DB] pull quotes error:', e); });
+}
+
 function initApiSync() {
     if (!_hasApiBackend()) return;
     // Quotes
@@ -227,6 +259,10 @@ function initApiSync() {
             }
         })
         .catch(function(e) { console.warn('[DB] load quotes error:', e); });
+
+    // Polling định kỳ mỗi 30 giây để đồng bộ trạng thái confirm từ máy khác
+    setInterval(_pullAndMergeQuotes, 30000);
+
     // Customers
     fetch('/api/customers')
         .then(r => r.ok ? r.json() : Promise.reject(r.status))
