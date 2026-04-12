@@ -347,17 +347,19 @@ function persistSavedQuotesLocalOnly() {
 let _quoteSyncTimer = null;
 function persistSavedQuotes() {
     persistSavedQuotesLocalOnly();
-    // Debounced full-sync lên API (1.5 giây sau lần cuối persist)
+    // Debounced bulk upsert lên API (1.5 giây sau lần cuối persist).
+    // KHÔNG dùng fullSync=1 (TRUNCATE) vì sẽ xóa confirm của máy khác.
+    // bulk=1 chỉ upsert từng quote, không xóa quote nào trên DB.
     if (_hasApiBackend()) {
         clearTimeout(_quoteSyncTimer);
         _quoteSyncTimer = setTimeout(function () {
-            fetch('/api/quotes?fullSync=1', {
+            fetch('/api/quotes?bulk=1', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(savedQuotes || []),
             }).then(function(r) {
-                if (!r.ok) r.text().then(t => console.warn('[DB] fullSync failed:', r.status, t));
-            }).catch(function(e) { console.warn('[DB] fullSync error:', e.message); });
+                if (!r.ok) r.text().then(t => console.warn('[DB] bulkSync failed:', r.status, t));
+            }).catch(function(e) { console.warn('[DB] bulkSync error:', e.message); });
         }, 1500);
     }
 }
