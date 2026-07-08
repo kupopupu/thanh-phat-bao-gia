@@ -155,19 +155,24 @@ function generateQuoteHTMLFullWidth() {
     const qrSrc = `https://img.vietqr.io/image/TCB-19038289004015-compact2.png?amount=${_qrAmount}&addInfo=${encodeURIComponent(qrCustomerInfo)}`;
 
     // Loyalty points: 1 point per 200.000 VND
-    // totalPoints = điểm đã ghi nhận từ các đơn COMPLETED (thu đủ tiền)
+    // totalPoints = (điểm đã ghi nhận từ các đơn COMPLETED) - (điểm đã dùng trên các đơn COMPLETED)
     let totalPoints = 0;
     try {
       loadSavedQuotes();
       totalPoints = savedQuotes.reduce(function(s, q) {
         try {
-            if ((q.customerPhone || '').trim() === (customerPhone || '').trim() &&
-            (q.orderStatus || '') === 'completed') {
-            return s + Math.floor((Number(q.total) || 0) / 200000);
-          }
+            if ((q.customerPhone || '').trim() === (customerPhone || '').trim()) {
+                let earned = 0;
+                if ((q.orderStatus || '') === 'completed') {
+                    earned = Math.floor((Number(q.total) || 0) / 200000);
+                }
+                const used = Number(q.pointsUsed) || 0;
+                return s + (earned - used);
+            }
         } catch (e) {}
         return s;
       }, 0);
+      if (totalPoints < 0) totalPoints = 0;
     } catch (e) { totalPoints = 0; }
 
     return `

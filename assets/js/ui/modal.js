@@ -123,11 +123,22 @@ function renderQuoteList(searchTerm) {
             ? `<span style="color:${debtAmt > 0 ? '#c0392b' : '#1a7a35'};font-weight:700;">${formatCurrency(debtAmt)}</span>`
             : '—';
 
-        // ---- Tích điểm (1 điểm / 200.000đ) ----
-        const points = status !== 'pending' ? Math.floor(total / 200000) : 0;
-        const pointsStr = status !== 'pending'
-            ? `<span style="color:#8e44ad;font-weight:700;">${points.toLocaleString('vi-VN')}</span>`
-            : '—';
+        // ---- Tích điểm (hiển thị kho điểm của khách hàng) ----
+        let points = 0;
+        const ph = (q.customerPhone || '').trim();
+        if (ph) {
+            points = savedQuotes.reduce((s, x) => {
+                if ((x.customerPhone || '').trim() === ph) {
+                    const earned = (x.orderStatus === 'completed') ? Math.floor((Number(x.total)||0)/200000) : 0;
+                    const used = Number(x.pointsUsed) || 0;
+                    return s + (earned - used);
+                }
+                return s;
+            }, 0);
+            if (points < 0) points = 0;
+        }
+
+        const pointsStr = `<span style="color:#8e44ad;font-weight:700;">${points.toLocaleString('vi-VN')}</span>`;
 
         // ---- Nút hành động chính (thay đổi theo status) ----
         let primaryBtn = '';

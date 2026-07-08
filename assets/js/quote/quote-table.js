@@ -409,7 +409,7 @@ function applyPointsRow(pts) {
     tr.style.background = '#fff8e1';
     tr.innerHTML = `
         <td style="text-align:center;color:#888;">${rowNum}</td>
-        <td class="product-name-cell" style="font-style:italic;color:#7b5800;font-weight:600;">Điểm đã tích</td>
+        <td class="product-name-cell" style="font-style:italic;color:#7b5800;font-weight:600;">Khấu trừ điểm thưởng</td>
         <td class="unit-cell" style="text-align:center;color:#555;">Điểm</td>
         <td style="text-align:center;font-weight:600;">${pts}</td>
         <td class="price-cell" style="text-align:right;color:#555;">1.000đ</td>

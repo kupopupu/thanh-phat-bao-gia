@@ -228,9 +228,13 @@ function saveCurrentQuote(optionalData) {
         const completedPoints = savedQuotes.reduce(function(s, q) {
             try {
                 if ((q.customerPhone || '').trim() === (customerPhone || '').trim() &&
-                    q.id !== id &&
-                    (q.orderStatus || '') === 'completed') {
-                    return s + Math.floor((Number(q.total) || 0) / 200000);
+                    q.id !== id) {
+                    let earned = 0;
+                    if ((q.orderStatus || '') === 'completed') {
+                        earned = Math.floor((Number(q.total) || 0) / 200000);
+                    }
+                    const used = Number(q.pointsUsed) || 0;
+                    return s + (earned - used);
                 }
             } catch (e) { }
             return s;
@@ -271,11 +275,22 @@ function saveCurrentQuote(optionalData) {
 
     // ---- Reset form for next quote ----
     try {
-        // Customer fields
-        ['customerCode', 'customerName', 'customerPhone', 'customerAddress'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.value = '';
-        });
+        // Clear customer inputs & reset points UI
+        if (typeof clearCustomerFields === 'function') {
+            clearCustomerFields();
+        } else {
+            ['customerName', 'customerPhone', 'customerAddress', 'customerCode'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+        }
+        
+        if (typeof _updatePointsDisplay === 'function') {
+            _updatePointsDisplay('');
+        }
+
+        const vatEl = document.getElementById('vat');
+        if (vatEl) vatEl.value = '';
         const cc = document.getElementById('customerCode');
         if (cc) { cc.readOnly = true; cc.style.background = '#f8f9fa'; }
 
@@ -350,6 +365,11 @@ function loadQuoteIntoForm(id) {
         document.getElementById('customerPhone').value   = q.customerPhone   || '';
         document.getElementById('customerAddress').value = q.customerAddress || '';
 
+        // Hiển thị thanh điểm tương ứng với số điện thoại vừa load
+        if (typeof _updatePointsDisplay === 'function') {
+            _updatePointsDisplay(q.customerPhone || '');
+        }
+
         // Quote type
         const qt = q.quoteType || 'cup';
         currentQuoteType = qt;
@@ -386,12 +406,11 @@ function loadQuoteIntoForm(id) {
         window.depositDisabled = isDisabled;
         window.depositToggleLocked = isDepositedLocked;
         if (isDepositedLocked) {
+            // A previously deposited order has a fixed deposit amount
             window.editingLockedDeposit  = true;
             window.editingDepositAmount  = (typeof q.depositAmount === 'number' ? q.depositAmount : Number(q.depositAmount) || 0);
-        } else if (!isDisabled) {
-            window.editingLockedDeposit  = true;
-            window.editingDepositAmount  = (typeof q.depositAmount === 'number' ? q.depositAmount : 0);
         } else {
+            // Not a locked deposit: keep deposit dynamically computed from total
             window.editingLockedDeposit  = false;
             window.editingDepositAmount  = 0;
         }
@@ -445,6 +464,16 @@ function loadQuoteIntoForm(id) {
 
             updateRowTotal(priceInp);
         });
+        // Re-apply points-redemption row if this saved quote had points used
+        try {
+            if (q.pointsUsed && Number(q.pointsUsed) > 0 && typeof applyPointsRow === 'function') {
+                applyPointsRow(Number(q.pointsUsed));
+                const badge = document.getElementById('pointsAppliedBadge');
+                const amtSpan = document.getElementById('pointsAppliedAmt');
+                if (badge) badge.style.display = 'inline';
+                if (amtSpan) amtSpan.textContent = String(q.pointsUsed);
+            }
+        } catch (e) { }
         updateRemoveButtons();
         updateSummary();
 

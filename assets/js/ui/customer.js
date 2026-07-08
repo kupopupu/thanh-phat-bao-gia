@@ -189,9 +189,17 @@ function _updatePointsDisplay(phone) {
     } catch (e) {}
     const pts = (savedQuotes || []).reduce(function(s, q) {
         try {
-            if ((q.customerPhone || '').trim() === ph &&
-                (q.orderStatus || '') === 'completed') {
-                return s + Math.floor((Number(q.total) || 0) / 200000);
+            if ((q.customerPhone || '').trim() === ph) {
+                let earned = 0;
+                if ((q.orderStatus || '') === 'completed') {
+                    earned = Math.floor((Number(q.total) || 0) / 200000);
+                }
+                let used = Number(q.pointsUsed) || 0;
+                // Không trừ điểm của chính đơn hàng đang sửa để trả lại vào tổng điểm hiện có
+                if (window.editingQuoteId && q.id === window.editingQuoteId) {
+                    used = 0;
+                }
+                return s + (earned - used);
             }
         } catch (e) {}
         return s;
@@ -200,7 +208,8 @@ function _updatePointsDisplay(phone) {
     _currentCustomerPoints = pts;
     if (valEl) valEl.textContent = pts.toLocaleString('vi-VN');
     if (badge) badge.style.display = 'none';
-    bar.style.display = pts > 0 ? 'flex' : 'none';
+    // Luôn hiển thị thanh điểm (kể cả khi = 0) để người dùng biết tính năng vẫn tồn tại
+    bar.style.display = 'flex';
 }
 
 /** Open the use-points modal pre-filled with available points. */
