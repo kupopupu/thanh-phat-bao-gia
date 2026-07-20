@@ -17,15 +17,15 @@ INSERT INTO quotes (
     id, customer_code, customer_name, customer_phone, customer_address,
     total, vat_percent, quote_type,
     deposit_disabled, deposit_amount, deposit_confirmed, paid,
-    order_status, received_amount, balance,
+    order_status, received_amount, balance, points_used,
     items, created_at, saved_at, updated_at
 ) VALUES (
     $1,$2,$3,$4,$5,
     $6,$7,$8,
     $9,$10,$11,$12,
-    $13,$14,$15,
-    $16::jsonb,
-    $17::timestamptz, $18::timestamptz, NOW()
+    $13,$14,$15,$16,
+    $17::jsonb,
+    $18::timestamptz, $19::timestamptz, NOW()
 )
 ON CONFLICT (id) DO UPDATE SET
     customer_code    = EXCLUDED.customer_code,
@@ -42,6 +42,7 @@ ON CONFLICT (id) DO UPDATE SET
     order_status     = EXCLUDED.order_status,
     received_amount  = EXCLUDED.received_amount,
     balance          = EXCLUDED.balance,
+    points_used      = EXCLUDED.points_used,
     items            = EXCLUDED.items,
     saved_at         = EXCLUDED.saved_at,
     updated_at       = NOW()
@@ -64,6 +65,7 @@ async function upsertOne(pool, q) {
         q.orderStatus     || 'pending',
         Number(q.receivedAmount)  || 0,
         Number(q.balance)         || 0,
+        Number(q.pointsUsed)      || 0,
         JSON.stringify(q.items    || []),
         q.createdAt || new Date().toISOString(),
         q.savedAt   || q.createdAt || new Date().toISOString(),

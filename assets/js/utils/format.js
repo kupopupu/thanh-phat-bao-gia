@@ -35,3 +35,28 @@ function escapeHtml(str) {
         return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '`': '&#96;' })[s];
     });
 }
+
+/**
+ * Return formatted creation date string for the quote being previewed/exported.
+ * Uses quote's original createdAt date if saved/editing, otherwise today's date.
+ * @returns {string}
+ */
+function getQuoteDisplayDate() {
+    try {
+        if (window._quoteExportCtx && window._quoteExportCtx.createdAt) {
+            const d = new Date(window._quoteExportCtx.createdAt);
+            if (!isNaN(d.getTime())) return d.toLocaleDateString('vi-VN');
+        }
+        if (window.editingQuoteId) {
+            if (typeof loadSavedQuotes === 'function') loadSavedQuotes();
+            if (typeof savedQuotes !== 'undefined' && Array.isArray(savedQuotes)) {
+                const q = savedQuotes.find(x => x.id === window.editingQuoteId);
+                if (q && q.createdAt) {
+                    const d = new Date(q.createdAt);
+                    if (!isNaN(d.getTime())) return d.toLocaleDateString('vi-VN');
+                }
+            }
+        }
+    } catch (e) { }
+    return new Date().toLocaleDateString('vi-VN');
+}

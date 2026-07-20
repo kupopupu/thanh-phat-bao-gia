@@ -355,7 +355,9 @@ function confirmOrderWithDeposit(quoteId, hasDeposit) {
     const total = Number(q.total) || 0;
 
     if (hasDeposit) {
-        const depositAmt = Math.round(total * 0.4);
+        const depositAmt = (q.depositAmount && Number(q.depositAmount) > 0)
+            ? Number(q.depositAmount)
+            : Math.round(total * 0.4);
         patchSavedQuote(quoteId, {
             orderStatus:      'deposited',
             depositConfirmed: true,
@@ -407,7 +409,11 @@ function markFullPayment(quoteId) {
  */
 function previewSavedQuote(quoteId) {
     const q = savedQuotes.find(q => q.id === quoteId);
-    window._quoteExportCtx = q ? { orderStatus: q.orderStatus || 'pending', depositAmount: q.depositAmount || 0 } : null;
+    window._quoteExportCtx = q ? {
+        orderStatus: q.orderStatus || 'pending',
+        depositAmount: q.depositAmount || 0,
+        createdAt: q.createdAt || q.savedAt || null
+    } : null;
     loadQuoteIntoForm(quoteId);
     if (typeof previewQuote === 'function') previewQuote();
 }
@@ -418,7 +424,11 @@ function previewSavedQuote(quoteId) {
  */
 function exportJPGSavedQuote(quoteId) {
     const q = savedQuotes.find(q => q.id === quoteId);
-    window._quoteExportCtx = q ? { orderStatus: q.orderStatus || 'pending', depositAmount: q.depositAmount || 0 } : null;
+    window._quoteExportCtx = q ? {
+        orderStatus: q.orderStatus || 'pending',
+        depositAmount: q.depositAmount || 0,
+        createdAt: q.createdAt || q.savedAt || null
+    } : null;
     loadQuoteIntoForm(quoteId);
     if (typeof exportQuoteAsJPG === 'function') exportQuoteAsJPG();
     window._quoteExportCtx = null;

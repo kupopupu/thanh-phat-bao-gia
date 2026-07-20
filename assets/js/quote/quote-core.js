@@ -125,7 +125,7 @@ function saveCurrentQuote(optionalData) {
             try {
                 // Points-redemption row: capture qty, don't add to regular items
                 if (row.getAttribute('data-points-row') === 'true') {
-                    pointsUsed = parseInt(String(row.cells[3]?.textContent || '0'), 10) || 0;
+                    pointsUsed = parseInt(String(row.cells[3]?.textContent || row.cells[3]?.innerText || '0').replace(/[^0-9]/g, ''), 10) || 0;
                     return;
                 }
                 const nameCell  = row.querySelector('.product-name-cell');
@@ -310,6 +310,7 @@ function saveCurrentQuote(optionalData) {
 
         // State
         quoteNumber = generateQuoteNumber();
+        window._quoteExportCtx       = null;
         window.editingQuoteId       = null;
         window.editingLockedDeposit = false;
         window.editingDepositAmount = 0;
@@ -414,6 +415,12 @@ function loadQuoteIntoForm(id) {
             window.editingLockedDeposit  = false;
             window.editingDepositAmount  = 0;
         }
+
+        window._quoteExportCtx = {
+            orderStatus: q.orderStatus || 'pending',
+            depositAmount: Number(q.depositAmount) || 0,
+            createdAt: q.createdAt || q.savedAt || null
+        };
 
         // Items
         const tbody = document.getElementById('itemsBody');

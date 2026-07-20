@@ -20,11 +20,14 @@ CREATE TABLE IF NOT EXISTS quotes (
     order_status     TEXT        NOT NULL DEFAULT 'pending', -- 'pending'|'deposited'|'no_deposit'|'completed'
     received_amount  BIGINT      NOT NULL DEFAULT 0,
     balance          BIGINT      NOT NULL DEFAULT 0,
+    points_used      BIGINT      NOT NULL DEFAULT 0,         -- Điểm thưởng đã khấu trừ
     items            JSONB       NOT NULL DEFAULT '[]',      -- [{name,unit,qty,price,discount,lineTotal}]
     created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     saved_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS points_used BIGINT NOT NULL DEFAULT 0;
 
 CREATE INDEX IF NOT EXISTS idx_quotes_phone    ON quotes(customer_phone);
 CREATE INDEX IF NOT EXISTS idx_quotes_status   ON quotes(order_status);
@@ -38,6 +41,10 @@ CREATE TABLE IF NOT EXISTS customers (
     address    TEXT        NOT NULL DEFAULT '',
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS name TEXT NOT NULL DEFAULT '';
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS phone TEXT NOT NULL DEFAULT '';
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS address TEXT NOT NULL DEFAULT '';
 
 CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone);
 

@@ -33,15 +33,28 @@ function generateQuoteHTMLFullWidth() {
       // ── Special: points-redemption row ──
       if (row.getAttribute('data-points-row') === 'true') {
         const totalCell = row.querySelector('.row-total');
-        const lineTotal = parseInt(String(totalCell?.dataset.raw || '0').replace(/[^0-9\-]/g, '') || '0', 10) || 0;
-        const qty       = parseInt(String(row.cells[3]?.textContent || '0'), 10) || 0;
+        const qty       = parseInt(String(row.cells[3]?.textContent || '0').replace(/[^0-9]/g, ''), 10) || 0;
+        let lineTotal   = 0;
+        if (totalCell) {
+          const rawVal = totalCell.dataset ? totalCell.dataset.raw : null;
+          if (rawVal != null && rawVal !== '') {
+            lineTotal = parseInt(String(rawVal), 10) || 0;
+          } else {
+            const textVal = String(totalCell.textContent || '').replace(/[^0-9\-]/g, '');
+            lineTotal = parseInt(textVal, 10) || 0;
+          }
+        }
+        if (lineTotal === 0 && qty > 0) {
+          lineTotal = -(qty * 1000);
+        }
+
         if (lineTotal !== 0) {
           subtotal += lineTotal; // lineTotal is negative → reduces total
           const rowBg = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
           itemsHTML += `
         <tr style="background:${rowBg};">
           <td style="padding:8px 10px;text-align:center;border-right:1px solid #e9ecef;font-size:13px;font-weight:500;color:#495057;">${index + 1}</td>
-          <td style="padding:8px 10px;border-right:1px solid #e9ecef;font-size:13px;color:#7b5800;font-weight:600;font-style:italic;">Điểm đã tích</td>
+          <td style="padding:8px 10px;border-right:1px solid #e9ecef;font-size:13px;color:#7b5800;font-weight:600;font-style:italic;">Khấu trừ điểm thưởng</td>
           <td style="padding:8px 10px;text-align:center;border-right:1px solid #e9ecef;font-size:13px;color:#495057;">Điểm</td>
           <td style="padding:8px 10px;text-align:center;border-right:1px solid #e9ecef;font-size:13px;font-weight:600;">${qty}</td>
           <td style="padding:8px 10px;text-align:right;border-right:1px solid #e9ecef;font-size:13px;font-weight:600;">1.000đ</td>
@@ -192,7 +205,7 @@ function generateQuoteHTMLFullWidth() {
           <div style="text-align:right;">
             <h1 style="margin:0;font-size:48px;font-weight:900;font-style:italic;text-transform:uppercase;">BÁO GIÁ</h1>
             <div style="font-size:13px;margin-top:6px;">Số: ${escapeHtml(quoteNumber)}</div>
-            <div style="font-size:12px;">${new Date().toLocaleDateString('vi-VN')}</div>
+            <div style="font-size:12px;">${getQuoteDisplayDate()}</div>
           </div>
         </div>
 

@@ -67,7 +67,7 @@ function generateFinalizeHTML() {
           </div>
           <div style="text-align:right;">
             <h1 style="margin:0;font-size:34px;font-weight:900;font-style:italic;text-transform:uppercase;">XÁC NHẬN MẪU IN</h1>
-            <div style="font-size:12px;margin-top:4px;">BG: ${escapeHtml(quoteNumber)} | ${new Date().toLocaleDateString('vi-VN')}</div>
+            <div style="font-size:12px;margin-top:4px;">BG: ${escapeHtml(quoteNumber)} | ${getQuoteDisplayDate()}</div>
           </div>
         </div>
 

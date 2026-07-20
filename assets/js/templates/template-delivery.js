@@ -72,7 +72,7 @@ function generateDeliveryHTML() {
           <div style="text-align:right;">
             <h1 style="margin:0;font-size:40px;font-weight:900;font-style:italic;text-transform:uppercase;">PHIẾU GIAO HÀNG</h1>
             <div style="font-size:13px;margin-top:4px;">Số BG: ${escapeHtml(quoteNumber)}</div>
-            <div style="font-size:12px;">${new Date().toLocaleDateString('vi-VN')}</div>
+            <div style="font-size:12px;">${getQuoteDisplayDate()}</div>
           </div>
         </div>
 

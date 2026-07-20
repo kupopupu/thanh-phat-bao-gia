@@ -36,6 +36,7 @@ function rowToQuote(row) {
         orderStatus:     row.order_status     || 'pending',
         receivedAmount:  Number(row.received_amount) || 0,
         balance:         Number(row.balance)  || 0,
+        pointsUsed:      Number(row.points_used) || 0,
         items:           Array.isArray(row.items) ? row.items : [],
         createdAt:       row.created_at ? new Date(row.created_at).toISOString() : '',
         savedAt:         row.saved_at   ? new Date(row.saved_at).toISOString()   : '',
