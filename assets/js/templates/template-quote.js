@@ -6,7 +6,7 @@
  *
  * Depends on:
  *   state.js        (quoteNumber, window.depositDisabled)
- *   utils/format.js (formatCurrency, escapeHtml)
+ *   utils/format.js (formatCurrency, escapeHtml, getQuoteDisplayDate)
  *   utils/dom.js    (getCellInputValue, getPriceThousandsFromRow)
  *   quote/quote-summary.js (computeDepositFromTotal)
  * --------------------------------------------------
@@ -14,6 +14,7 @@
 
 /**
  * Full-width portrait A4 quote template (primary template used for PDF & preview).
+ * Automatically adjusts layout scaling according to item count so content never gets cut off.
  * @returns {string}  Inner HTML string for the A4 printable area
  */
 function generateQuoteHTMLFullWidth() {
@@ -21,15 +22,116 @@ function generateQuoteHTMLFullWidth() {
     const customerPhone   = document.getElementById('customerPhone').value   || 'Chưa nhập';
     const customerAddress = document.getElementById('customerAddress').value || 'Chưa nhập';
 
-    // Totals – accumulated inside the forEach loop below
     let subtotal = 0;
     let discountAmt = 0;
     const vat = parseFloat(document.getElementById('vat').value) || 0;
 
+    // Count valid items first to compute dynamic scaling
+    let itemCount = 0;
+    const rows = document.querySelectorAll('#itemsBody tr');
+    rows.forEach((row) => {
+      if (row.getAttribute('data-points-row') === 'true') {
+        const qty = parseInt(String(row.cells[3]?.textContent || '0').replace(/[^0-9]/g, ''), 10) || 0;
+        if (qty > 0) itemCount++;
+        return;
+      }
+      const nameInp = row.querySelector('.product-name-cell input') || row.cells[1]?.querySelector('input');
+      if (nameInp?.value) itemCount++;
+    });
+
+    const _expCtx = window._quoteExportCtx;
+    const _isDepositedExport = _expCtx && _expCtx.orderStatus === 'deposited' && _expCtx.depositAmount > 0;
+    const _exportDepositAmt  = _isDepositedExport ? Math.round(_expCtx.depositAmount) : 0;
+    if (_isDepositedExport) itemCount++; // include deposit row
+
+    // Dynamic layout scaling based on item count to ensure everything fits on 1 A4 page
+    const totalRows = itemCount;
+    let headerPadding = '18px 26px';
+    let logoHeight = '60px';
+    let titleFontSize = '46px';
+    let sectionMargin = '14px';
+    let custPadding = '12px';
+    let custFontSize = '13px';
+    let thPadding = '9px 8px';
+    let thFontSize = '13.5px';
+    let tdPadding = '6px 8px';
+    let tdFontSize = '12.5px';
+    let qrMaxH = '180px';
+    let totalsPadding = '16px';
+    let totalsFontSize = '12.5px';
+    let totalsTitleFontSize = '14.5px';
+    let notesFontSize = '12.5px';
+    let sigHeight = '65px';
+    let footerMargin = '14px';
+    let footerFontSize = '13.5px';
+    let footerSubFontSize = '15.5px';
+
+    if (totalRows >= 14) {
+        headerPadding = '8px 14px';
+        logoHeight = '36px';
+        titleFontSize = '28px';
+        sectionMargin = '4px';
+        custPadding = '5px 8px';
+        custFontSize = '10px';
+        thPadding = '4px 4px';
+        thFontSize = '10.5px';
+        tdPadding = '2px 4px';
+        tdFontSize = '9.5px';
+        qrMaxH = '90px';
+        totalsPadding = '6px 8px';
+        totalsFontSize = '9.5px';
+        totalsTitleFontSize = '11px';
+        notesFontSize = '9.5px';
+        sigHeight = '28px';
+        footerMargin = '4px';
+        footerFontSize = '10px';
+        footerSubFontSize = '11px';
+    } else if (totalRows >= 10) { // e.g. 10 to 13 items (like 12 items in user screenshot)
+        headerPadding = '10px 16px';
+        logoHeight = '42px';
+        titleFontSize = '32px';
+        sectionMargin = '6px';
+        custPadding = '6px 10px';
+        custFontSize = '11px';
+        thPadding = '5px 5px';
+        thFontSize = '11.5px';
+        tdPadding = '3px 5px';
+        tdFontSize = '10.5px';
+        qrMaxH = '115px';
+        totalsPadding = '8px 10px';
+        totalsFontSize = '10.5px';
+        totalsTitleFontSize = '12px';
+        notesFontSize = '10px';
+        sigHeight = '35px';
+        footerMargin = '6px';
+        footerFontSize = '11px';
+        footerSubFontSize = '12.5px';
+    } else if (totalRows >= 7) {
+        headerPadding = '12px 18px';
+        logoHeight = '48px';
+        titleFontSize = '36px';
+        sectionMargin = '8px';
+        custPadding = '8px 12px';
+        custFontSize = '11.5px';
+        thPadding = '6px 6px';
+        thFontSize = '12px';
+        tdPadding = '4px 6px';
+        tdFontSize = '11.5px';
+        qrMaxH = '140px';
+        totalsPadding = '10px 12px';
+        totalsFontSize = '11.5px';
+        totalsTitleFontSize = '13px';
+        notesFontSize = '11.5px';
+        sigHeight = '45px';
+        footerMargin = '8px';
+        footerFontSize = '12px';
+        footerSubFontSize = '13.5px';
+    }
+
     // Rows HTML
     let itemsHTML = '';
-    let itemCount = 0;
-    document.querySelectorAll('#itemsBody tr').forEach((row, index) => {
+    let currIndex = 0;
+    rows.forEach((row) => {
       // ── Special: points-redemption row ──
       if (row.getAttribute('data-points-row') === 'true') {
         const totalCell = row.querySelector('.row-total');
@@ -49,21 +151,21 @@ function generateQuoteHTMLFullWidth() {
         }
 
         if (lineTotal !== 0) {
-          subtotal += lineTotal; // lineTotal is negative → reduces total
-          const rowBg = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
+          subtotal += lineTotal;
+          const rowBg = currIndex % 2 === 0 ? '#ffffff' : '#f8f9fa';
           itemsHTML += `
         <tr style="background:${rowBg};">
-          <td style="padding:8px 10px;text-align:center;border-right:1px solid #e9ecef;font-size:13px;font-weight:500;color:#495057;">${index + 1}</td>
-          <td style="padding:8px 10px;border-right:1px solid #e9ecef;font-size:13px;color:#7b5800;font-weight:600;font-style:italic;">Khấu trừ điểm thưởng</td>
-          <td style="padding:8px 10px;text-align:center;border-right:1px solid #e9ecef;font-size:13px;color:#495057;">Điểm</td>
-          <td style="padding:8px 10px;text-align:center;border-right:1px solid #e9ecef;font-size:13px;font-weight:600;">${qty}</td>
-          <td style="padding:8px 10px;text-align:right;border-right:1px solid #e9ecef;font-size:13px;font-weight:600;">1.000đ</td>
-          <td style="padding:8px 10px;text-align:right;border-right:1px solid #e9ecef;font-size:13px;color:#adb5bd;">—</td>
-          <td style="padding:8px 10px;text-align:right;font-size:13px;color:#c0392b;font-weight:700;">-${new Intl.NumberFormat('vi-VN').format(Math.abs(lineTotal))}đ</td>
+          <td style="padding:${tdPadding};text-align:center;border-right:1px solid #e9ecef;font-size:${tdFontSize};font-weight:500;color:#495057;">${currIndex + 1}</td>
+          <td style="padding:${tdPadding};border-right:1px solid #e9ecef;font-size:${tdFontSize};color:#7b5800;font-weight:600;font-style:italic;">Khấu trừ điểm thưởng</td>
+          <td style="padding:${tdPadding};text-align:center;border-right:1px solid #e9ecef;font-size:${tdFontSize};color:#495057;">Điểm</td>
+          <td style="padding:${tdPadding};text-align:center;border-right:1px solid #e9ecef;font-size:${tdFontSize};font-weight:600;">${qty}</td>
+          <td style="padding:${tdPadding};text-align:right;border-right:1px solid #e9ecef;font-size:${tdFontSize};font-weight:600;">1.000đ</td>
+          <td style="padding:${tdPadding};text-align:right;border-right:1px solid #e9ecef;font-size:${tdFontSize};color:#adb5bd;">—</td>
+          <td style="padding:${tdPadding};text-align:right;font-size:${tdFontSize};color:#c0392b;font-weight:700;">-${new Intl.NumberFormat('vi-VN').format(Math.abs(lineTotal))}đ</td>
         </tr>`;
-          itemCount++;
+          currIndex++;
         }
-        return; // skip normal row parsing
+        return;
       }
 
       const nameInp = row.querySelector('.product-name-cell input') || row.cells[1]?.querySelector('input');
@@ -75,7 +177,6 @@ function generateQuoteHTMLFullWidth() {
       const quantity = parseFloat(qtyInp?.value || 0) || 0;
       const price    = getPriceThousandsFromRow(row) || 0;
 
-      // Determine per-unit discount (prefer the discount input's dataset.raw; fall back to stored row dataset values)
       let discountPerUnit = 0;
       const discInp = row.querySelector('.discount-input');
       if (discInp && discInp.dataset && discInp.dataset.raw != null) {
@@ -90,27 +191,26 @@ function generateQuoteHTMLFullWidth() {
       const effectiveUnit = Math.max(0, price - discountPerUnit);
       const lineTotal = quantity * effectiveUnit;
 
-      // Accumulate totals used in the summary: pre-discount subtotal, and total discount amount
       subtotal += quantity * price;
       discountAmt += quantity * discountPerUnit;
 
       if (itemName) {
-        const rowBg = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
+        const rowBg = currIndex % 2 === 0 ? '#ffffff' : '#f8f9fa';
         itemsHTML += `
         <tr style="background:${rowBg};">
-          <td style="padding:8px 10px;text-align:center;border-right:1px solid #e9ecef;font-size:13px;font-weight:500;color:#495057;">${index + 1}</td>
-          <td style="padding:8px 10px;border-right:1px solid #e9ecef;font-size:13px;color:#2c3e50;font-weight:500;">${escapeHtml(itemName)}</td>
-          <td style="padding:8px 10px;text-align:center;border-right:1px solid #e9ecef;font-size:13px;color:#495057;">${escapeHtml(unit)}</td>
-          <td style="padding:8px 10px;text-align:center;border-right:1px solid #e9ecef;font-size:13px;font-weight:600;">${quantity}</td>
-          <td style="padding:8px 10px;text-align:right;border-right:1px solid #e9ecef;font-size:13px;font-weight:600;">${new Intl.NumberFormat('vi-VN').format(price)}đ</td>
-          <td style="padding:8px 10px;text-align:right;border-right:1px solid #e9ecef;font-size:13px;font-weight:600;color:#d46a0a;">${new Intl.NumberFormat('vi-VN').format(discountPerUnit)}đ</td>
-          <td style="padding:8px 10px;text-align:right;font-size:13px;color:#1D75AE;font-weight:700;">${new Intl.NumberFormat('vi-VN').format(lineTotal)}đ</td>
+          <td style="padding:${tdPadding};text-align:center;border-right:1px solid #e9ecef;font-size:${tdFontSize};font-weight:500;color:#495057;">${currIndex + 1}</td>
+          <td style="padding:${tdPadding};border-right:1px solid #e9ecef;font-size:${tdFontSize};color:#2c3e50;font-weight:500;">${escapeHtml(itemName)}</td>
+          <td style="padding:${tdPadding};text-align:center;border-right:1px solid #e9ecef;font-size:${tdFontSize};color:#495057;">${escapeHtml(unit)}</td>
+          <td style="padding:${tdPadding};text-align:center;border-right:1px solid #e9ecef;font-size:${tdFontSize};font-weight:600;">${quantity}</td>
+          <td style="padding:${tdPadding};text-align:right;border-right:1px solid #e9ecef;font-size:${tdFontSize};font-weight:600;">${new Intl.NumberFormat('vi-VN').format(price)}đ</td>
+          <td style="padding:${tdPadding};text-align:right;border-right:1px solid #e9ecef;font-size:${tdFontSize};font-weight:600;color:#d46a0a;">${new Intl.NumberFormat('vi-VN').format(discountPerUnit)}đ</td>
+          <td style="padding:${tdPadding};text-align:right;font-size:${tdFontSize};color:#1D75AE;font-weight:700;">${new Intl.NumberFormat('vi-VN').format(lineTotal)}đ</td>
         </tr>`;
-        itemCount++;
+        currIndex++;
       }
     });
 
-    // Derived totals – computed AFTER forEach has accumulated subtotal/discountAmt
+    // Derived totals
     const afterDisc = subtotal - discountAmt;
     const vatAmt    = afterDisc * (vat / 100);
     const total     = afterDisc + vatAmt;
@@ -118,42 +218,39 @@ function generateQuoteHTMLFullWidth() {
     const deposit   = computeDepositFromTotal(totalVal);
     const remaining = Math.max(0, Math.round(totalVal - deposit));
 
-    // ── Deposit row (only when exporting a quote confirmed with deposit) ──
-    const _expCtx = window._quoteExportCtx;
-    const _isDepositedExport = _expCtx && _expCtx.orderStatus === 'deposited' && _expCtx.depositAmount > 0;
-    const _exportDepositAmt  = _isDepositedExport ? Math.round(_expCtx.depositAmount) : 0;
-
+    // ── Deposit row ──
     if (_isDepositedExport) {
-        const rowBg = itemCount % 2 === 0 ? '#ffffff' : '#f8f9fa';
+        const rowBg = currIndex % 2 === 0 ? '#ffffff' : '#f8f9fa';
         itemsHTML += `
         <tr style="background:${rowBg};">
-          <td style="padding:8px 10px;text-align:center;border-right:1px solid #e9ecef;font-size:13px;font-weight:500;color:#495057;">${itemCount + 1}</td>
-          <td style="padding:8px 10px;border-right:1px solid #e9ecef;font-size:13px;color:#c0392b;font-weight:700;font-style:italic;">Tiền cọc hàng</td>
-          <td style="padding:8px 10px;text-align:center;border-right:1px solid #e9ecef;font-size:13px;color:#495057;">Đợt</td>
-          <td style="padding:8px 10px;text-align:center;border-right:1px solid #e9ecef;font-size:13px;font-weight:600;">1</td>
-          <td style="padding:8px 10px;text-align:right;border-right:1px solid #e9ecef;font-size:13px;font-weight:700;color:#c0392b;">-${new Intl.NumberFormat('vi-VN').format(_exportDepositAmt)}đ</td>
-          <td style="padding:8px 10px;text-align:right;border-right:1px solid #e9ecef;font-size:13px;color:#adb5bd;">—</td>
-          <td style="padding:8px 10px;text-align:right;font-size:13px;color:#c0392b;font-weight:700;">-${new Intl.NumberFormat('vi-VN').format(_exportDepositAmt)}đ</td>
+          <td style="padding:${tdPadding};text-align:center;border-right:1px solid #e9ecef;font-size:${tdFontSize};font-weight:500;color:#495057;">${currIndex + 1}</td>
+          <td style="padding:${tdPadding};border-right:1px solid #e9ecef;font-size:${tdFontSize};color:#c0392b;font-weight:700;font-style:italic;">Tiền cọc hàng</td>
+          <td style="padding:${tdPadding};text-align:center;border-right:1px solid #e9ecef;font-size:${tdFontSize};color:#495057;">Đợt</td>
+          <td style="padding:${tdPadding};text-align:center;border-right:1px solid #e9ecef;font-size:${tdFontSize};font-weight:600;">1</td>
+          <td style="padding:${tdPadding};text-align:right;border-right:1px solid #e9ecef;font-size:${tdFontSize};font-weight:700;color:#c0392b;">-${new Intl.NumberFormat('vi-VN').format(_exportDepositAmt)}đ</td>
+          <td style="padding:${tdPadding};text-align:right;border-right:1px solid #e9ecef;font-size:${tdFontSize};color:#adb5bd;">—</td>
+          <td style="padding:${tdPadding};text-align:right;font-size:${tdFontSize};color:#c0392b;font-weight:700;">-${new Intl.NumberFormat('vi-VN').format(_exportDepositAmt)}đ</td>
         </tr>`;
-        itemCount++;
+        currIndex++;
     }
 
-    // Padding rows (reduce count by 1 for each extra row injected)
-    for (let i = itemCount; i < 10; i++) {
+    // Padding rows (only if currIndex < 7)
+    const minRows = 7;
+    for (let i = currIndex; i < minRows; i++) {
         const rowBg = i % 2 === 0 ? '#ffffff' : '#f8f9fa';
         itemsHTML += `
         <tr style="background:${rowBg};">
-          <td style="padding:5px 6px;text-align:center;border-right:1px solid #e9ecef;font-size:10px;color:#adb5bd;">${i + 1}</td>
-          <td style="padding:5px 6px;border-right:1px solid #e9ecef;height:16px;"></td>
-          <td style="padding:5px 6px;border-right:1px solid #e9ecef;"></td>
-          <td style="padding:5px 6px;border-right:1px solid #e9ecef;"></td>
-          <td style="padding:5px 6px;border-right:1px solid #e9ecef;"></td>
-          <td style="padding:5px 6px;border-right:1px solid #e9ecef;"></td>
-          <td style="padding:5px 6px;"></td>
+          <td style="padding:${tdPadding};text-align:center;border-right:1px solid #e9ecef;font-size:10px;color:#adb5bd;">${i + 1}</td>
+          <td style="padding:${tdPadding};border-right:1px solid #e9ecef;height:16px;"></td>
+          <td style="padding:${tdPadding};border-right:1px solid #e9ecef;"></td>
+          <td style="padding:${tdPadding};border-right:1px solid #e9ecef;"></td>
+          <td style="padding:${tdPadding};border-right:1px solid #e9ecef;"></td>
+          <td style="padding:${tdPadding};border-right:1px solid #e9ecef;"></td>
+          <td style="padding:${tdPadding};"></td>
         </tr>`;
     }
 
-    // ── Summary & QR values: adjust when deposit row is injected ──
+    // ── Summary & QR values ──
     const _displayDeposit   = _isDepositedExport ? 0 : deposit;
     const _displayRemaining = _isDepositedExport
         ? Math.max(0, Math.round(totalVal - _exportDepositAmt))
@@ -167,8 +264,6 @@ function generateQuoteHTMLFullWidth() {
         : 'Thanh toán ' + quoteNumber;
     const qrSrc = `https://img.vietqr.io/image/TCB-19038289004015-compact2.png?amount=${_qrAmount}&addInfo=${encodeURIComponent(qrCustomerInfo)}`;
 
-    // Loyalty points: 1 point per 200.000 VND
-    // totalPoints = (điểm đã ghi nhận từ các đơn COMPLETED) - (điểm đã dùng trên các đơn COMPLETED)
     let totalPoints = 0;
     try {
       loadSavedQuotes();
@@ -190,52 +285,52 @@ function generateQuoteHTMLFullWidth() {
 
     return `
     <div style="font-family:'Be Vietnam Pro','Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#2c3e50;width:100%;padding:0;box-sizing:border-box;">
-      <div style="width:100%;max-width:920px;padding:16px;box-sizing:border-box;background:#ffffff;border-radius:6px;">
+      <div style="width:100%;max-width:920px;padding:12px;box-sizing:border-box;background:#ffffff;border-radius:6px;">
 
         <!-- Header -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding:18px 26px;background:#1D75AE;color:white;border-radius:10px;">
-          <div style="display:flex;flex-direction:column;gap:6px;">
-            <img src="assets/image/Thanh Phát Trắng.png" alt="Thanh Phát" style="height:64px;object-fit:contain;display:block;" crossorigin="anonymous"/>
-            <div style="font-size:12px;color:rgba(255,255,255,0.95);line-height:1.3;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${sectionMargin};padding:${headerPadding};background:#1D75AE;color:white;border-radius:10px;">
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <img src="assets/image/Thanh Phát Trắng.png" alt="Thanh Phát" style="height:${logoHeight};object-fit:contain;display:block;" crossorigin="anonymous"/>
+            <div style="font-size:11px;color:rgba(255,255,255,0.95);line-height:1.3;">
               <div>0966 767 731</div>
               <div>thanhhien.po24@gmail.com</div>
               <div>Địa chỉ: Số 114/12 hẻm Quản Cơ Thành, K. Bình Thới 2, P. Bình Đức, An Giang</div>
             </div>
           </div>
           <div style="text-align:right;">
-            <h1 style="margin:0;font-size:48px;font-weight:900;font-style:italic;text-transform:uppercase;">BÁO GIÁ</h1>
-            <div style="font-size:13px;margin-top:6px;">Số: ${escapeHtml(quoteNumber)}</div>
-            <div style="font-size:12px;">${getQuoteDisplayDate()}</div>
+            <h1 style="margin:0;font-size:${titleFontSize};font-weight:900;font-style:italic;text-transform:uppercase;">BÁO GIÁ</h1>
+            <div style="font-size:12px;margin-top:4px;">Số: ${escapeHtml(quoteNumber)}</div>
+            <div style="font-size:11px;">${getQuoteDisplayDate()}</div>
           </div>
         </div>
 
         <!-- Customer info -->
-        <div style="margin-bottom:12px;padding:12px;background:#f8f9fa;border-radius:8px;border-left:5px solid #1D75AE;">
-          <div style="font-size:13px;">
-            <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:6px;flex-wrap:wrap;">
+        <div style="margin-bottom:${sectionMargin};padding:${custPadding};background:#f8f9fa;border-radius:8px;border-left:4px solid #1D75AE;">
+          <div style="font-size:${custFontSize};">
+            <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px;flex-wrap:wrap;">
               <div style="flex:1;min-width:120px;"><strong>Tên KH:</strong> ${escapeHtml(customerName)}</div>
               <div style="flex:1;min-width:120px;text-align:center;"><strong>ĐT:</strong> ${escapeHtml(customerPhone)}</div>
               <div style="flex:1;min-width:160px;text-align:right;"><strong>Tổng điểm:</strong> ${totalPoints} điểm</div>
             </div>
-            <div style="margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+            <div style="margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
               <div style="flex:1;min-width:160px;"><strong>Địa chỉ:</strong> ${escapeHtml(customerAddress)}</div>
-              <div style="min-width:160px;text-align:right;font-size:11px;color:#555;font-style:italic;">* bạn sẽ được tích 1 điểm với mỗi 200.000đ sau khi thanh toán</div>
+              <div style="min-width:160px;text-align:right;font-size:10px;color:#555;font-style:italic;">* bạn sẽ được tích 1 điểm với mỗi 200.000đ sau khi thanh toán</div>
             </div>
           </div>
         </div>
 
         <!-- Items table -->
-        <div style="margin-bottom:12px;">
-          <table style="width:100%;border-collapse:separate;border-spacing:0;font-size:15px;border-radius:8px;overflow:hidden;">
+        <div style="margin-bottom:${sectionMargin};">
+          <table style="width:100%;border-collapse:separate;border-spacing:0;font-size:${tdFontSize};border-radius:8px;overflow:hidden;">
             <thead>
               <tr style="background:#1D75AE;color:white;">
-                <th style="padding:10px 8px;border:1px solid rgba(255,255,255,0.2);width:6%;font-size:14px;">STT</th>
-                <th style="padding:10px 8px;border:1px solid rgba(255,255,255,0.2);width:44%;font-size:14px;">Tên hàng hóa</th>
-                <th style="padding:10px 8px;border:1px solid rgba(255,255,255,0.2);width:8%;font-size:14px;">ĐVT</th>
-                <th style="padding:10px 8px;border:1px solid rgba(255,255,255,0.2);width:6%;font-size:14px;">SL</th>
-                <th style="padding:10px 8px;border:1px solid rgba(255,255,255,0.2);width:12%;font-size:14px;">Đơn giá</th>
-                <th style="padding:10px 8px;border:1px solid rgba(255,255,255,0.2);width:8%;font-size:14px;">Chiết khấu</th>
-                <th style="padding:10px 8px;border:1px solid rgba(255,255,255,0.2);width:16%;font-size:14px;">Thành tiền</th>
+                <th style="padding:${thPadding};border:1px solid rgba(255,255,255,0.2);width:6%;font-size:${thFontSize};">STT</th>
+                <th style="padding:${thPadding};border:1px solid rgba(255,255,255,0.2);width:44%;font-size:${thFontSize};">Tên hàng hóa</th>
+                <th style="padding:${thPadding};border:1px solid rgba(255,255,255,0.2);width:8%;font-size:${thFontSize};">ĐVT</th>
+                <th style="padding:${thPadding};border:1px solid rgba(255,255,255,0.2);width:6%;font-size:${thFontSize};">SL</th>
+                <th style="padding:${thPadding};border:1px solid rgba(255,255,255,0.2);width:12%;font-size:${thFontSize};">Đơn giá</th>
+                <th style="padding:${thPadding};border:1px solid rgba(255,255,255,0.2);width:8%;font-size:${thFontSize};">Chiết khấu</th>
+                <th style="padding:${thPadding};border:1px solid rgba(255,255,255,0.2);width:16%;font-size:${thFontSize};">Thành tiền</th>
               </tr>
             </thead>
             <tbody>${itemsHTML}</tbody>
@@ -243,14 +338,14 @@ function generateQuoteHTMLFullWidth() {
         </div>
 
         <!-- Payment + Totals -->
-        <div style="margin-top:20px;display:flex;gap:16px;align-items:flex-start;">
+        <div style="margin-top:${sectionMargin};display:flex;gap:12px;align-items:flex-start;">
           <!-- QR + bank info -->
-          <div style="flex:1.6;background:#FFFFFF;padding:14px;border-radius:8px;display:flex;gap:4px;align-items:stretch;border:1px solid #e0e8f0;">
+          <div style="flex:1.5;background:#FFFFFF;padding:10px;border-radius:8px;display:flex;gap:6px;align-items:center;border:1px solid #e0e8f0;">
             <div style="display:flex;align-items:center;justify-content:center;">
-              <img src="${qrSrc}" alt="QR" style="max-width:200px;max-height:290px;width:auto;height:auto;display:block;" crossorigin="anonymous" onerror="this.src='assets/image/Mã QR Techcombank-02.png'"/>
+              <img src="${qrSrc}" alt="QR" style="max-width:160px;max-height:${qrMaxH};width:auto;height:auto;display:block;" crossorigin="anonymous" onerror="this.src='assets/image/Mã QR Techcombank-02.png'"/>
             </div>
-            <div style="flex:1;font-size:14px;color:#333;line-height:1.5;padding-left:8px;">
-              <div style="font-weight:700;color:#1D75AE;margin-bottom:6px;">THÔNG TIN CHUYỂN KHOẢN</div>
+            <div style="flex:1;font-size:${custFontSize};color:#333;line-height:1.4;padding-left:4px;">
+              <div style="font-weight:700;color:#1D75AE;margin-bottom:4px;">THÔNG TIN CHUYỂN KHOẢN</div>
               <div><strong>Ngân hàng:</strong> TechcomBank</div>
               <div><strong>Số tài khoản:</strong> 19038289004015</div>
               <div><strong>Chủ tài khoản:</strong> Nguyễn Thanh Hiền</div>
@@ -259,44 +354,43 @@ function generateQuoteHTMLFullWidth() {
           </div>
 
           <!-- Totals box -->
-          <div style="flex:0.9;background:#1D75AE;color:white;padding:18px;border-radius:8px;display:flex;flex-direction:column;gap:8px;min-width:200px;">
-            <div style="width:100%;display:flex;justify-content:space-between;font-size:13px;"><span>Tổng tiền hàng:</span><span>${formatCurrency(subtotal)}</span></div>
-            <div style="width:100%;display:flex;justify-content:space-between;font-size:13px;"><span>Chiết khấu:</span><span>-${formatCurrency(discountAmt)}</span></div>
-            <div style="width:100%;display:flex;justify-content:space-between;font-size:13px;"><span>VAT (${vat}%):</span><span>${formatCurrency(vatAmt)}</span></div>
-            <div style="width:100%;border-top:1px solid rgba(255,255,255,0.25);padding-top:8px;display:flex;justify-content:space-between;font-size:15px;font-weight:800;"><span>TỔNG:</span><span>${formatCurrency(total)}</span></div>
-            <div style="width:100%;display:flex;justify-content:space-between;font-size:13px;"><span>${_isDepositedExport ? 'Tiền cọc' : (window.depositDisabled ? 'Cọc' : 'Cọc (40%)')}:</span><span>${_isDepositedExport ? '0đ' : formatCurrency(_displayDeposit)}</span></div>
-            <div style="width:100%;display:flex;justify-content:space-between;font-size:13px;"><span>${_isDepositedExport ? 'Còn lại' : (window.depositDisabled ? 'Còn lại' : 'Còn lại (60%)')}:</span><span>${formatCurrency(_displayRemaining)}</span></div>
+          <div style="flex:1;background:#1D75AE;color:white;padding:${totalsPadding};border-radius:8px;display:flex;flex-direction:column;gap:6px;min-width:190px;">
+            <div style="width:100%;display:flex;justify-content:space-between;font-size:${totalsFontSize};"><span>Tổng tiền hàng:</span><span>${formatCurrency(subtotal)}</span></div>
+            <div style="width:100%;display:flex;justify-content:space-between;font-size:${totalsFontSize};"><span>Chiết khấu:</span><span>-${formatCurrency(discountAmt)}</span></div>
+            <div style="width:100%;display:flex;justify-content:space-between;font-size:${totalsFontSize};"><span>VAT (${vat}%):</span><span>${formatCurrency(vatAmt)}</span></div>
+            <div style="width:100%;border-top:1px solid rgba(255,255,255,0.25);padding-top:6px;display:flex;justify-content:space-between;font-size:${totalsTitleFontSize};font-weight:800;"><span>TỔNG:</span><span>${formatCurrency(total)}</span></div>
+            <div style="width:100%;display:flex;justify-content:space-between;font-size:${totalsFontSize};"><span>${_isDepositedExport ? 'Tiền cọc' : (window.depositDisabled ? 'Cọc' : 'Cọc (40%)')}:</span><span>${_isDepositedExport ? '0đ' : formatCurrency(_displayDeposit)}</span></div>
+            <div style="width:100%;display:flex;justify-content:space-between;font-size:${totalsFontSize};"><span>${_isDepositedExport ? 'Còn lại' : (window.depositDisabled ? 'Còn lại' : 'Còn lại (60%)')}:</span><span>${formatCurrency(_displayRemaining)}</span></div>
           </div>
         </div>
 
         <!-- Notes + Signature -->
-        <div style="margin-top:12px;display:flex;gap:16px;align-items:flex-start;">
-          <div style="flex:1.6;font-size:15px;color:#333;padding:8px;">
-            <div style="font-weight:700;color:#1D75AE;margin-bottom:6px;">LƯU Ý</div>
+        <div style="margin-top:${sectionMargin};display:flex;gap:12px;align-items:flex-start;">
+          <div style="flex:1.5;font-size:${notesFontSize};color:#333;padding:4px;line-height:1.4;">
+            <div style="font-weight:700;color:#1D75AE;margin-bottom:4px;">LƯU Ý</div>
             <div>- Giá đã bao gồm in ấn và MIỄN PHÍ vận chuyển.</div>
             <div>- Thời gian giao hàng: 4-7 ngày làm việc.</div>
             <div>- Báo giá có hiệu lực trong 7 ngày.</div>
             <div>- Mỗi điểm quy đổi ra 1.000đ.</div>
-            <div>- Tích điểm chỉ được khấu trừ trực tiếp vào đơn hàng không được quy đổi ra tiền mặt.</div>
+            <div>- Tích điểm chỉ được khấu trừ trực tiếp vào đơn hàng không quy đổi ra tiền mặt.</div>
             <div>- Mỗi báo giá quy đổi tối thiểu 50 điểm và tối đa 100 điểm.</div>
           </div>
-          <div style="flex:0.9;text-align:center;font-size:13px;color:#333;">
-            <div style="font-weight:700;color:#1D75AE;margin-bottom:6px;">Người Lập Báo Giá</div>
-            <div style="height:80px;border-bottom:1px dashed rgba(0,0,0,0.15);margin-bottom:8px;"></div>
+          <div style="flex:1;text-align:center;font-size:${totalsFontSize};color:#333;">
+            <div style="font-weight:700;color:#1D75AE;margin-bottom:4px;">Người Lập Báo Giá</div>
+            <div style="height:${sigHeight};border-bottom:1px dashed rgba(0,0,0,0.15);margin-bottom:6px;"></div>
             <div style="font-weight:700;">Nguyễn Thanh Hiền</div>
           </div>
         </div>
 
         <!-- Footer -->
-        <div style="width:100%;margin-top:18px;">
-          <hr style="border:none;border-top:2px solid #1D75AE;margin:0 0 10px 0;"/>
-          <div style="text-align:center;font-size:14px;color:#1D75AE;font-weight:700;line-height:1.6;">
+        <div style="width:100%;margin-top:${footerMargin};">
+          <hr style="border:none;border-top:2px solid #1D75AE;margin:0 0 6px 0;"/>
+          <div style="text-align:center;font-size:${footerFontSize};color:#1D75AE;font-weight:700;line-height:1.4;">
             <div>Nếu có bất kỳ điều gì khiến quý khách không hài lòng xin hãy liên hệ để được giải quyết,</div>
-            <div style="font-size:16px;letter-spacing:1px;">Cảm ơn quý khách đã sử dụng dịch vụ!</div>
+            <div style="font-size:${footerSubFontSize};letter-spacing:0.5px;">Cảm ơn quý khách đã sử dụng dịch vụ!</div>
           </div>
         </div>
 
       </div>
     </div>`;
 }
-
