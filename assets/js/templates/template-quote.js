@@ -44,30 +44,30 @@ function generateQuoteHTMLFullWidth() {
     const _exportDepositAmt  = _isDepositedExport ? Math.round(_expCtx.depositAmount) : 0;
     if (_isDepositedExport) itemCount++; // include deposit row
 
-    // Dynamic layout scaling based on item count to ensure everything fits on 1 A4 page
+    // Fixed layout for 15 product rows to fit 1 A4 page perfectly
     const totalRows = itemCount;
-    let headerPadding = '18px 26px';
-    let logoHeight = '60px';
-    let titleFontSize = '46px';
-    let sectionMargin = '14px';
-    let custPadding = '12px';
-    let custFontSize = '13px';
-    let thPadding = '9px 8px';
-    let thFontSize = '13.5px';
-    let tdPadding = '6px 8px';
-    let tdFontSize = '12.5px';
-    let qrMaxH = '180px';
-    let totalsPadding = '16px';
-    let totalsFontSize = '12.5px';
-    let totalsTitleFontSize = '14.5px';
-    let notesFontSize = '12.5px';
-    let notesLineHeight = '1.4';
-    let sigHeight = '65px';
-    let footerMargin = '14px';
-    let footerFontSize = '13.5px';
-    let footerSubFontSize = '15.5px';
+    let headerPadding = '12px 18px';
+    let logoHeight = '48px';
+    let titleFontSize = '36px';
+    let sectionMargin = '8px';
+    let custPadding = '8px 12px';
+    let custFontSize = '11.5px';
+    let thPadding = '6px 6px';
+    let thFontSize = '12px';
+    let tdPadding = '4.5px 6px';
+    let tdFontSize = '11px';
+    let qrMaxH = '130px';
+    let totalsPadding = '10px 12px';
+    let totalsFontSize = '11.5px';
+    let totalsTitleFontSize = '13px';
+    let notesFontSize = '10.5px';
+    let notesLineHeight = '1.35';
+    let sigHeight = '38px';
+    let footerMargin = '8px';
+    let footerFontSize = '12px';
+    let footerSubFontSize = '13.5px';
 
-    if (totalRows >= 14) {
+    if (totalRows > 15) {
         headerPadding = '8px 14px';
         logoHeight = '36px';
         titleFontSize = '28px';
@@ -88,48 +88,6 @@ function generateQuoteHTMLFullWidth() {
         footerMargin = '4px';
         footerFontSize = '10px';
         footerSubFontSize = '11px';
-    } else if (totalRows >= 10) { // e.g. 10 to 13 items (like 12 items in user screenshot)
-        headerPadding = '10px 16px';
-        logoHeight = '42px';
-        titleFontSize = '32px';
-        sectionMargin = '6px';
-        custPadding = '6px 10px';
-        custFontSize = '11px';
-        thPadding = '5px 5px';
-        thFontSize = '11.5px';
-        tdPadding = '3px 5px';
-        tdFontSize = '10.5px';
-        qrMaxH = '115px';
-        totalsPadding = '8px 10px';
-        totalsFontSize = '10.5px';
-        totalsTitleFontSize = '12px';
-        notesFontSize = '9.5px';
-        notesLineHeight = '1.3';
-        sigHeight = '30px';
-        footerMargin = '6px';
-        footerFontSize = '11px';
-        footerSubFontSize = '12.5px';
-    } else if (totalRows >= 7) {
-        headerPadding = '12px 18px';
-        logoHeight = '48px';
-        titleFontSize = '36px';
-        sectionMargin = '8px';
-        custPadding = '8px 12px';
-        custFontSize = '11.5px';
-        thPadding = '6px 6px';
-        thFontSize = '12px';
-        tdPadding = '4px 6px';
-        tdFontSize = '11.5px';
-        qrMaxH = '140px';
-        totalsPadding = '10px 12px';
-        totalsFontSize = '11.5px';
-        totalsTitleFontSize = '13px';
-        notesFontSize = '10.5px';
-        notesLineHeight = '1.35';
-        sigHeight = '38px';
-        footerMargin = '8px';
-        footerFontSize = '12px';
-        footerSubFontSize = '13.5px';
     }
 
     // Rows HTML
@@ -238,14 +196,14 @@ function generateQuoteHTMLFullWidth() {
         currIndex++;
     }
 
-    // Padding rows (only if currIndex < 7)
-    const minRows = 7;
+    // Padding rows (always pad to at least 15 rows for consistent A4 fill)
+    const minRows = 15;
     for (let i = currIndex; i < minRows; i++) {
         const rowBg = i % 2 === 0 ? '#ffffff' : '#f8f9fa';
         itemsHTML += `
         <tr style="background:${rowBg};">
           <td style="padding:${tdPadding};text-align:center;border-right:1px solid #e9ecef;font-size:10px;color:#adb5bd;">${i + 1}</td>
-          <td style="padding:${tdPadding};border-right:1px solid #e9ecef;height:16px;"></td>
+          <td style="padding:${tdPadding};border-right:1px solid #e9ecef;height:22px;"></td>
           <td style="padding:${tdPadding};border-right:1px solid #e9ecef;"></td>
           <td style="padding:${tdPadding};border-right:1px solid #e9ecef;"></td>
           <td style="padding:${tdPadding};border-right:1px solid #e9ecef;"></td>
@@ -288,8 +246,8 @@ function generateQuoteHTMLFullWidth() {
     } catch (e) { totalPoints = 0; }
 
     return `
-    <div style="font-family:'Be Vietnam Pro','Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#2c3e50;width:100%;padding:0;box-sizing:border-box;">
-      <div style="width:100%;max-width:920px;padding:12px;box-sizing:border-box;background:#ffffff;border-radius:6px;">
+    <div style="font-family:'Be Vietnam Pro','Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#2c3e50;width:100%;height:100%;padding:0;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;">
+      <div style="width:100%;height:100%;padding:12px;box-sizing:border-box;background:#ffffff;border-radius:6px;display:flex;flex-direction:column;justify-content:space-between;flex:1;">
 
         <!-- Header -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${sectionMargin};padding:${headerPadding};background:#1D75AE;color:white;border-radius:10px;">
