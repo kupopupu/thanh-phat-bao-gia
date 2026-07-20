@@ -355,27 +355,27 @@ Thanh Phát Webapp copy    <script src="https://cdnjs.cloudflare.com/ajax/libs/h
 
                 <!-- Stats -->
                 <div class="stats-bar">
-                    <div class="stat-card">
+                    <div class="stat-card" id="statCardTotal" onclick="filterQuoteList('all')" style="cursor:pointer;" title="Bấm để xem tất cả báo giá">
                         <div class="stat-label">Tổng báo giá</div>
                         <div class="stat-value" id="statTotalCount">0</div>
                         <div class="stat-sub">đã lưu</div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card" id="statCardCustomer">
                         <div class="stat-label">Khách hàng</div>
                         <div class="stat-value" id="statCustomerCount">0</div>
                         <div class="stat-sub">đã lưu</div>
                     </div>
-                    <div class="stat-card highlight">
+                    <div class="stat-card highlight" id="statCardReceived" onclick="filterQuoteList('received')" style="cursor:pointer;" title="Bấm để lọc đơn đã cọc / thu đủ">
                         <div class="stat-label">Tổng đã nhận</div>
                         <div class="stat-value" id="statReceivedAmount">0đ</div>
-                        <div class="stat-sub">cọ + thu đủ</div>
+                        <div class="stat-sub">cọc + thu đủ</div>
                     </div>
-                    <div class="stat-card" style="border-color:#f5c6cb;">
-                        <div class="stat-label">Tổng nợ</div>
+                    <div class="stat-card" id="statCardDebt" onclick="filterQuoteList('debt')" style="border-color:#f5c6cb;cursor:pointer;" title="Bấm để chỉ lọc danh sách đơn nợ chưa thu">
+                        <div class="stat-label">Tổng nợ 🔍</div>
                         <div class="stat-value" id="statTotalDebt" style="color:#c0392b;">0đ</div>
-                        <div class="stat-sub">chưa thu</div>
+                        <div class="stat-sub">chưa thu (bấm lọc)</div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card" id="statCardRevenue" onclick="filterQuoteList('completed')" style="cursor:pointer;" title="Bấm để lọc đơn đã hoàn thành">
                         <div class="stat-label">Tổng doanh thu</div>
                         <div class="stat-value" id="statTotalRevenue">0đ</div>
                         <div class="stat-sub">đã xác nhận</div>

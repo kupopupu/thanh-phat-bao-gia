@@ -11,10 +11,22 @@
  * --------------------------------------------------
  */
 
-// ── Phân trang dashboard ──────────────────────────────────────────
+// ── Phân trang dashboard & Lọc ─────────────────────────────────────
 let _qlPage    = 1;
 let _qlPerPage = 10;
 let _qlSearch  = '';
+let _qlFilter  = 'all'; // 'all' | 'debt' | 'received' | 'completed' | 'pending'
+
+function filterQuoteList(mode) {
+    if (_qlFilter === mode) {
+        _qlFilter = 'all'; // Tắt lọc nếu bấm lại vào thẻ đang chọn
+    } else {
+        _qlFilter = mode;
+    }
+    _qlPage = 1;
+    renderQuoteList();
+    renderDashboardStats();
+}
 
 function qlPrevPage() {
     if (_qlPage > 1) { _qlPage--; renderQuoteList(); }
@@ -59,18 +71,60 @@ function renderQuoteList(searchTerm) {
     }
     const term = (_qlSearch || '').toLowerCase().trim();
     const filtered = savedQuotes.filter(q => {
-        if (!term) return true;
-        return (
-            (q.quoteNumber   || '').toLowerCase().includes(term) ||
-            (q.customerName  || '').toLowerCase().includes(term) ||
-            (q.customerPhone || '').toLowerCase().includes(term)
-        );
+        if (term) {
+            const match = (
+                (q.quoteNumber   || '').toLowerCase().includes(term) ||
+                (q.customerName  || '').toLowerCase().includes(term) ||
+                (q.customerPhone || '').toLowerCase().includes(term)
+            );
+            if (!match) return false;
+        }
+
+        const st  = q.orderStatus || 'pending';
+        const tot = Number(q.total) || 0;
+
+        if (_qlFilter === 'debt') {
+            let debtAmt = 0;
+            if (st === 'deposited') {
+                const dep = q.depositAmount || Math.round(tot * 0.4);
+                debtAmt = Math.max(0, tot - dep);
+            } else if (st === 'no_deposit') {
+                debtAmt = tot;
+            }
+            return debtAmt > 0;
+        } else if (_qlFilter === 'received') {
+            return st === 'deposited' || st === 'completed';
+        } else if (_qlFilter === 'completed') {
+            return st === 'completed';
+        } else if (_qlFilter === 'pending') {
+            return st === 'pending';
+        }
+
+        return true;
     });
 
+    let filterBanner = '';
+    if (_qlFilter === 'debt') {
+        filterBanner = `<div style="margin-bottom:12px;padding:8px 14px;background:#fff5f5;border:1px solid #f5c6cb;border-radius:6px;color:#c0392b;font-weight:600;font-size:13px;display:flex;justify-content:space-between;align-items:center;">
+            <span>🔴 Đang lọc: Danh sách báo giá nợ chưa thu (${filtered.length} đơn)</span>
+            <button onclick="filterQuoteList('all')" style="background:#c0392b;color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;">✕ Xem tất cả</button>
+        </div>`;
+    } else if (_qlFilter === 'received') {
+        filterBanner = `<div style="margin-bottom:12px;padding:8px 14px;background:#f0fff4;border:1px solid #c6f6d5;border-radius:6px;color:#276749;font-weight:600;font-size:13px;display:flex;justify-content:space-between;align-items:center;">
+            <span>🟢 Đang lọc: Đơn đã cọc / đã thu đủ (${filtered.length} đơn)</span>
+            <button onclick="filterQuoteList('all')" style="background:#276749;color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;">✕ Xem tất cả</button>
+        </div>`;
+    } else if (_qlFilter === 'completed') {
+        filterBanner = `<div style="margin-bottom:12px;padding:8px 14px;background:#ebf8ff;border:1px solid #bee3f8;border-radius:6px;color:#2b6cb0;font-weight:600;font-size:13px;display:flex;justify-content:space-between;align-items:center;">
+            <span>🔵 Đang lọc: Đơn đã hoàn thành (${filtered.length} đơn)</span>
+            <button onclick="filterQuoteList('all')" style="background:#2b6cb0;color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;">✕ Xem tất cả</button>
+        </div>`;
+    }
+
     if (!filtered.length) {
-        container.innerHTML = `<div id="quoteListEmptyState">
+        container.innerHTML = `${filterBanner}<div id="quoteListEmptyState">
             <div class="empty-icon">📋</div>
-            <p>${term ? 'Không tìm thấy báo giá phù hợp.' : 'Chưa có báo giá nào. Nhấn <strong>＋ Báo giá mới</strong> để bắt đầu!'}</p>
+            <p>${term ? 'Không tìm thấy báo giá phù hợp.' : 'Không có báo giá nào trong danh sách lọc.'}</p>
         </div>`;
         return;
     }
@@ -190,7 +244,7 @@ function renderQuoteList(searchTerm) {
         </tr>`;
     }).join('');
 
-    container.innerHTML = `<div style="overflow-x:auto;">
+    container.innerHTML = filterBanner + `<div style="overflow-x:auto;">
     <table class="quote-list-table" style="min-width:900px;table-layout:fixed;width:100%;">
         <thead><tr>
             <th style="width:32px;text-align:center;">#</th>
@@ -218,13 +272,11 @@ function renderQuoteList(searchTerm) {
         </span>
         <button class="ql-pg-btn" onclick="qlNextPage(${totalItems})" ${_qlPage >= totalPages ? 'disabled' : ''}>►</button>
         <span class="ql-pg-sep"></span>
-        <label class="ql-pg-size">
-            <input type="number" min="1" max="200" value="${_qlPerPage}"
-                onchange="qlSetPerPage(this.value)"
-                onkeydown="if(event.key==='Enter')qlSetPerPage(this.value)">
-            / trang
-        </label>
-        <span class="ql-pg-info">${totalItems} bản ghi</span>
+        <select class="ql-pg-select" onchange="qlSetPerPage(this.value)">
+            <option value="10" ${_qlPerPage === 10 ? 'selected' : ''}>10 / trang</option>
+            <option value="20" ${_qlPerPage === 20 ? 'selected' : ''}>20 / trang</option>
+            <option value="50" ${_qlPerPage === 50 ? 'selected' : ''}>50 / trang</option>
+        </select>
     </div>`;
 }
 
@@ -279,6 +331,32 @@ function renderDashboardStats() {
     setEl('statTotalRevenue',    formatCurrency(totalRevenue));
     setEl('statMonthRevenue',    formatCurrency(monthRevenue));
     setEl('statMonthLabel',      `Tháng ${month + 1}/${year}`);
+
+    // Highlighting active filter card
+    const debtCard = document.getElementById('statCardDebt');
+    if (debtCard) {
+        if (_qlFilter === 'debt') {
+            debtCard.style.background = '#fff5f5';
+            debtCard.style.borderColor = '#c0392b';
+            debtCard.style.boxShadow = '0 0 0 3px rgba(192, 57, 43, 0.25)';
+        } else {
+            debtCard.style.background = '';
+            debtCard.style.borderColor = '#f5c6cb';
+            debtCard.style.boxShadow = '';
+        }
+    }
+    const totCard = document.getElementById('statCardTotal');
+    if (totCard) {
+        totCard.style.boxShadow = (_qlFilter === 'all') ? '' : '';
+    }
+    const recCard = document.getElementById('statCardReceived');
+    if (recCard) {
+        recCard.style.boxShadow = (_qlFilter === 'received') ? '0 0 0 3px rgba(40, 167, 69, 0.35)' : '';
+    }
+    const revCard = document.getElementById('statCardRevenue');
+    if (revCard) {
+        revCard.style.boxShadow = (_qlFilter === 'completed') ? '0 0 0 3px rgba(29, 117, 174, 0.35)' : '';
+    }
 }
 
 /**
