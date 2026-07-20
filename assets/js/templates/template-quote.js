@@ -61,6 +61,7 @@ function generateQuoteHTMLFullWidth() {
     let totalsFontSize = '12.5px';
     let totalsTitleFontSize = '14.5px';
     let notesFontSize = '12.5px';
+    let notesLineHeight = '1.4';
     let sigHeight = '65px';
     let footerMargin = '14px';
     let footerFontSize = '13.5px';
@@ -81,8 +82,9 @@ function generateQuoteHTMLFullWidth() {
         totalsPadding = '6px 8px';
         totalsFontSize = '9.5px';
         totalsTitleFontSize = '11px';
-        notesFontSize = '9.5px';
-        sigHeight = '28px';
+        notesFontSize = '8.5px';
+        notesLineHeight = '1.25';
+        sigHeight = '22px';
         footerMargin = '4px';
         footerFontSize = '10px';
         footerSubFontSize = '11px';
@@ -101,8 +103,9 @@ function generateQuoteHTMLFullWidth() {
         totalsPadding = '8px 10px';
         totalsFontSize = '10.5px';
         totalsTitleFontSize = '12px';
-        notesFontSize = '10px';
-        sigHeight = '35px';
+        notesFontSize = '9.5px';
+        notesLineHeight = '1.3';
+        sigHeight = '30px';
         footerMargin = '6px';
         footerFontSize = '11px';
         footerSubFontSize = '12.5px';
@@ -121,8 +124,9 @@ function generateQuoteHTMLFullWidth() {
         totalsPadding = '10px 12px';
         totalsFontSize = '11.5px';
         totalsTitleFontSize = '13px';
-        notesFontSize = '11.5px';
-        sigHeight = '45px';
+        notesFontSize = '10.5px';
+        notesLineHeight = '1.35';
+        sigHeight = '38px';
         footerMargin = '8px';
         footerFontSize = '12px';
         footerSubFontSize = '13.5px';
@@ -366,7 +370,7 @@ function generateQuoteHTMLFullWidth() {
 
         <!-- Notes + Signature -->
         <div style="margin-top:${sectionMargin};display:flex;gap:12px;align-items:flex-start;">
-          <div style="flex:1.5;font-size:${notesFontSize};color:#333;padding:4px;line-height:1.4;">
+          <div style="flex:1.5;font-size:${notesFontSize};color:#333;padding:4px;line-height:${notesLineHeight};">
             <div style="font-weight:700;color:#1D75AE;margin-bottom:4px;">LƯU Ý</div>
             <div>- Giá đã bao gồm in ấn và MIỄN PHÍ vận chuyển.</div>
             <div>- Thời gian giao hàng: 4-7 ngày làm việc.</div>

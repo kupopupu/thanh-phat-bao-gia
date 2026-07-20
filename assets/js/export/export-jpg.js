@@ -46,13 +46,14 @@ async function _captureElementToA4Jpg(pageEl, filename) {
     showNotification('Đang xuất ảnh JPG…');
     const rect = pageEl.getBoundingClientRect();
     const elW = Math.max(1, rect.width);
+    const elH = Math.max(1, rect.height);
 
     // Clone into an off-screen host
     const host = document.createElement('div');
     host.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;z-index:-1;background:#ffffff;';
     const clone = pageEl.cloneNode(true);
     clone.style.width = elW + 'px';
-    clone.style.height = 'auto';
+    clone.style.height = elH + 'px';
     clone.style.boxSizing = 'border-box';
     if (!clone.style.background || clone.style.background === '') clone.style.background = '#ffffff';
     host.appendChild(clone);
@@ -66,13 +67,16 @@ async function _captureElementToA4Jpg(pageEl, filename) {
         return;
     }
 
-    const targetW = 2480;
+    const targetW = 2480, targetH = 3508; // Exact A4 portrait @ ~300dpi
+    const scaleX = targetW / elW;
+    const scaleY = targetH / elH;
+    const renderScale = Math.min(scaleX, scaleY);
 
     let canvas;
     try {
         canvas = await html2canvas(clone, {
             backgroundColor: '#ffffff',
-            scale: 3,
+            scale: renderScale,
             useCORS: true,
             allowTaint: false,
             logging: false,
@@ -84,9 +88,6 @@ async function _captureElementToA4Jpg(pageEl, filename) {
         return;
     }
 
-    const scale = targetW / canvas.width;
-    const targetH = Math.round(canvas.height * scale);
-
     const out = document.createElement('canvas');
     out.width = targetW;
     out.height = targetH;
@@ -94,7 +95,12 @@ async function _captureElementToA4Jpg(pageEl, filename) {
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, targetW, targetH);
     ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, targetW, targetH);
+
+    const drawW = Math.round(canvas.width);
+    const drawH = Math.round(canvas.height);
+    const offX = Math.floor((targetW - drawW) / 2);
+    const offY = Math.floor((targetH - drawH) / 2);
+    ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, offX, offY, drawW, drawH);
 
     _downloadCanvasAsJpeg(out, filename);
     host.remove();
@@ -120,27 +126,29 @@ async function exportQuoteAsJPG() {
 async function _renderDirectHtmlToJpg(htmlContent, cssW, cssH, targetW, targetH, filename) {
     showNotification('Đang xuất ảnh JPG…');
     const container = document.createElement('div');
-    // Omit fixed height so element height expands to fit content naturally
-    container.style.cssText = `position:absolute;top:-9999px;left:-9999px;width:${cssW}px;height:auto;background:#fff;padding:0;box-sizing:border-box;`;
+    container.style.cssText = `position:absolute;top:-9999px;left:-9999px;width:${cssW}px;height:${cssH}px;background:#fff;padding:0;box-sizing:border-box;overflow:hidden;`;
     container.innerHTML = htmlContent;
     document.body.appendChild(container);
     await _waitImages(container, 3000);
 
     try {
         const canvas = await html2canvas(container, { backgroundColor: '#ffffff', scale: 3, useCORS: true, logging: false });
-        // Map to target with dynamic height based on content ratio
-        const scale = targetW / canvas.width;
-        const outW = targetW;
-        const outH = Math.round(canvas.height * scale);
-
+        
         const out = document.createElement('canvas');
-        out.width = outW;
-        out.height = outH;
+        out.width = targetW;
+        out.height = targetH;
         const ctx = out.getContext('2d');
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, outW, outH);
+        ctx.fillRect(0, 0, targetW, targetH);
         ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, outW, outH);
+
+        const scale = Math.min(targetW / canvas.width, targetH / canvas.height);
+        const drawW = Math.round(canvas.width * scale);
+        const drawH = Math.round(canvas.height * scale);
+        const offX = Math.floor((targetW - drawW) / 2);
+        const offY = Math.floor((targetH - drawH) / 2);
+
+        ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, offX, offY, drawW, drawH);
 
         _downloadCanvasAsJpeg(out, filename);
         showNotification('Đã xuất ảnh JPG thành công!');
