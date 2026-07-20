@@ -365,10 +365,7 @@ function renderDashboardStats() {
  */
 function deleteSavedQuote(id) {
     if (!confirm('Xóa báo giá này?')) return;
-    const idx = savedQuotes.findIndex(q => q.id === id);
-    if (idx === -1) return;
-    savedQuotes.splice(idx, 1);
-    persistSavedQuotes();
+    deleteQuoteFromStorage(id);
     renderQuoteList(document.getElementById('mainQuoteSearch')?.value || '');
     renderDashboardStats();
 }

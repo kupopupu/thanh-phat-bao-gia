@@ -364,6 +364,29 @@ function persistSavedQuotes() {
     }
 }
 
+/**
+ * Xóa 1 báo giá theo id khỏi mảng local, localStorage và cơ sở dữ liệu PostgreSQL DB
+ * @param {string} id
+ */
+function deleteQuoteFromStorage(id) {
+    if (!id) return;
+    const idx = (savedQuotes || []).findIndex(q => q.id === id);
+    if (idx !== -1) {
+        savedQuotes.splice(idx, 1);
+    }
+    persistSavedQuotesLocalOnly();
+
+    if (_hasApiBackend()) {
+        fetch('/api/quotes?id=' + encodeURIComponent(id), {
+            method: 'DELETE'
+        }).then(function(r) {
+            if (!r.ok) r.text().then(t => console.warn('[DB] DELETE quote failed:', r.status, t));
+        }).catch(function(e) {
+            console.warn('[DB] DELETE quote error:', e.message);
+        });
+    }
+}
+
 // ---- Customers ---------------------------------------------
 
 function loadSavedCustomers() {

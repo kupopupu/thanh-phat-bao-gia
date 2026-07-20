@@ -121,6 +121,13 @@ module.exports = async function handler(req, res) {
             return res.status(200).json({ ok: true });
         }
 
+        if (req.method === 'DELETE') {
+            const id = req.query.id || (req.body && req.body.id);
+            if (!id) return res.status(400).json({ error: 'Missing id' });
+            await pool.query('DELETE FROM quotes WHERE id = $1', [id]);
+            return res.status(200).json({ ok: true, deletedId: id });
+        }
+
         return res.status(405).json({ error: 'Method not allowed' });
     } catch (err) {
         console.error('[api/quotes]', err.message);
