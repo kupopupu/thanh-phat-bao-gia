@@ -44,28 +44,28 @@ function generateQuoteHTMLFullWidth() {
     const _exportDepositAmt  = _isDepositedExport ? Math.round(_expCtx.depositAmount) : 0;
     if (_isDepositedExport) itemCount++; // include deposit row
 
-    // Fixed layout for 15 product rows to fit 1 A4 page perfectly
+    // Fixed layout for 15 product rows to fit 1 A4 page perfectly with generous spacing & large QR
     const totalRows = itemCount;
-    let headerPadding = '12px 18px';
-    let logoHeight = '48px';
-    let titleFontSize = '36px';
-    let sectionMargin = '8px';
-    let custPadding = '8px 12px';
-    let custFontSize = '11.5px';
-    let thPadding = '6px 6px';
-    let thFontSize = '12px';
-    let tdPadding = '4.5px 6px';
-    let tdFontSize = '11px';
-    let qrMaxH = '130px';
-    let totalsPadding = '10px 12px';
-    let totalsFontSize = '11.5px';
-    let totalsTitleFontSize = '13px';
-    let notesFontSize = '10.5px';
-    let notesLineHeight = '1.35';
-    let sigHeight = '38px';
-    let footerMargin = '8px';
-    let footerFontSize = '12px';
-    let footerSubFontSize = '13.5px';
+    let headerPadding = '14px 22px';
+    let logoHeight = '52px';
+    let titleFontSize = '40px';
+    let sectionMargin = '10px';
+    let custPadding = '10px 14px';
+    let custFontSize = '12px';
+    let thPadding = '8px 8px';
+    let thFontSize = '13px';
+    let tdPadding = '5.5px 8px';
+    let tdFontSize = '11.5px';
+    let qrMaxH = '190px';
+    let totalsPadding = '12px 14px';
+    let totalsFontSize = '12px';
+    let totalsTitleFontSize = '14px';
+    let notesFontSize = '11px';
+    let notesLineHeight = '1.4';
+    let sigHeight = '45px';
+    let footerMargin = '10px';
+    let footerFontSize = '12.5px';
+    let footerSubFontSize = '14px';
 
     if (totalRows > 15) {
         headerPadding = '8px 14px';
@@ -304,7 +304,7 @@ function generateQuoteHTMLFullWidth() {
           <!-- QR + bank info -->
           <div style="flex:1.5;background:#FFFFFF;padding:10px;border-radius:8px;display:flex;gap:6px;align-items:center;border:1px solid #e0e8f0;">
             <div style="display:flex;align-items:center;justify-content:center;">
-              <img src="${qrSrc}" alt="QR" style="max-width:160px;max-height:${qrMaxH};width:auto;height:auto;display:block;" crossorigin="anonymous" onerror="this.src='assets/image/Mã QR Techcombank-02.png'"/>
+              <img src="${qrSrc}" alt="QR" style="max-width:210px;max-height:${qrMaxH};width:auto;height:auto;display:block;" crossorigin="anonymous" onerror="this.src='assets/image/Mã QR Techcombank-02.png'"/>
             </div>
             <div style="flex:1;font-size:${custFontSize};color:#333;line-height:1.4;padding-left:4px;">
               <div style="font-weight:700;color:#1D75AE;margin-bottom:4px;">THÔNG TIN CHUYỂN KHOẢN</div>
