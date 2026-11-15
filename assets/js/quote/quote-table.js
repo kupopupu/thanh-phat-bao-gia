@@ -214,6 +214,117 @@ function attachRowListeners(row) {
     } catch (e) { }
 }
 
+// ---- Catalog Item Saving Behaviour -----------------------------------
+
+/**
+ * Kiểm tra xem một sản phẩm đã có trong danh mục (savedProducts hoặc productList) hay chưa.
+ * @param {string} name
+ * @returns {boolean}
+ */
+function isProductInCatalog(name) {
+    if (!name) return false;
+    const cleanName = String(name).trim().toLowerCase();
+    if (!cleanName) return false;
+    try {
+        if (typeof loadSavedProducts === 'function') loadSavedProducts();
+    } catch (e) { }
+    const inSaved = Array.isArray(window.savedProducts) && window.savedProducts.some(p => (p.name || '').trim().toLowerCase() === cleanName);
+    if (inSaved) return true;
+    const inExcel = Array.isArray(window.productList) && window.productList.some(p => (p.name || '').trim().toLowerCase() === cleanName);
+    return !!inExcel;
+}
+window.isProductInCatalog = isProductInCatalog;
+
+/**
+ * Cập nhật trạng thái hiển thị của button 'Lưu SP' trên dòng hàng hóa:
+ * – Nếu tên trống: disabled, mờ (is-empty)
+ * – Nếu sản phẩm ĐÃ CÓ trong danh mục: disabled, hiển thị icon check + 'Đã có' (is-saved)
+ * – Nếu sản phẩm CHƯA CÓ trong danh mục: enabled, hiển thị icon + 'Lưu SP' (can-save)
+ * @param {HTMLTableRowElement} row
+ */
+function updateRowSaveBtnStatus(row) {
+    if (!row || row.getAttribute('data-points-row') === 'true') return;
+    const btn = row.querySelector('.btn-save-item');
+    if (!btn) return;
+
+    const nameCell = row.querySelector('.product-name-cell');
+    const nameInp = nameCell ? nameCell.querySelector('input, select') : null;
+    const nameVal = nameInp ? (nameInp.value || '').trim() : '';
+
+    if (!nameVal) {
+        btn.disabled = true;
+        btn.className = 'btn-save-item is-empty';
+        btn.title = 'Nhập tên hàng hóa để lưu vào danh mục';
+        btn.innerHTML = '<span>Lưu SP</span>';
+        return;
+    }
+
+    if (isProductInCatalog(nameVal)) {
+        btn.disabled = true;
+        btn.className = 'btn-save-item is-saved';
+        btn.title = 'Sản phẩm này đã có sẵn trong danh mục hàng hóa';
+        btn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg><span>Đã có</span>';
+    } else {
+        btn.disabled = false;
+        btn.className = 'btn-save-item can-save';
+        btn.title = 'Bấm để thêm sản phẩm mới này vào danh mục hàng hóa';
+        btn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg><span>Lưu SP</span>';
+    }
+}
+window.updateRowSaveBtnStatus = updateRowSaveBtnStatus;
+
+/**
+ * Thao tác bấm nút Lưu SP trên dòng hàng hóa.
+ * Lưu trực tiếp sản phẩm vào savedProducts, đồng bộ và đổi trạng thái nút sang disabled ('Đã có').
+ * @param {HTMLElement} button
+ */
+function saveRowItemToCatalog(button) {
+    try {
+        const row = button.closest('tr');
+        if (!row) return;
+
+        const nameCell = row.querySelector('.product-name-cell');
+        const nameInp = nameCell ? nameCell.querySelector('input, select') : null;
+        const name = nameInp ? (nameInp.value || '').trim() : '';
+
+        if (!name) {
+            if (typeof showNotification === 'function') showNotification('Vui lòng nhập tên hàng hóa trước khi lưu!', 'warning');
+            return;
+        }
+
+        const unitCell = row.querySelector('.unit-cell');
+        const unitInp = unitCell ? unitCell.querySelector('input') : null;
+        const unit = unitInp ? (unitInp.value || '').trim() : '';
+
+        const priceInp = row.querySelector('.price-cell input');
+        let price = 0;
+        if (priceInp) {
+            price = (priceInp.dataset && priceInp.dataset.raw != null)
+                ? parseFloat(priceInp.dataset.raw) || 0
+                : parseFloat(String(priceInp.value || '').replace(/[^0-9.-]/g, '')) || 0;
+        }
+
+        if (typeof upsertProduct === 'function') {
+            upsertProduct(name, unit, price);
+        }
+
+        if (typeof showNotification === 'function') {
+            showNotification('Đã thêm "' + name + '" vào danh mục hàng hóa!');
+        }
+
+        // Cập nhật trạng thái nút
+        updateRowSaveBtnStatus(row);
+
+        // Kích hoạt làm mới datalist ở các dòng khác để nhận diện sản phẩm mới
+        document.querySelectorAll('.product-name-cell input[list]').forEach(inp => {
+            try { inp.dispatchEvent(new Event('focus')); } catch (e) { }
+        });
+    } catch (err) {
+        console.error('saveRowItemToCatalog error:', err);
+    }
+}
+window.saveRowItemToCatalog = saveRowItemToCatalog;
+
 // ---- Row Management --------------------------------------------------
 
 /** Add a new data row to the items table. */
@@ -226,14 +337,19 @@ function addRow() {
     const unitPlaceholder = currentQuoteType === 'cup' ? 'Thùng' : 'Cái';
 
     newRow.innerHTML = `
-        <td>${rowCount}</td>
+        <td style="text-align:center;color:var(--text-sub);">${rowCount}</td>
         <td class="product-name-cell"></td>
         <td class="unit-cell"></td>
         <td><input type="number" placeholder="1" min="0" step="0.01" onchange="updateRowTotal(this)"></td>
         <td class="price-cell"></td>
         <td class="discount-cell"></td>
-        <td class="row-total">0</td>
-        <td><button class="remove-btn" onclick="removeRow(this)">Xóa</button></td>
+        <td class="row-total">0đ</td>
+        <td style="text-align:center;">
+            <button type="button" class="btn-save-item is-empty" disabled onclick="saveRowItemToCatalog(this)" title="Nhập tên hàng hóa để lưu">
+                <span>Lưu SP</span>
+            </button>
+        </td>
+        <td style="text-align:center;"><button class="remove-btn" onclick="removeRow(this)" title="Xóa dòng">✕</button></td>
     `;
     tbody.appendChild(newRow);
 
@@ -267,6 +383,7 @@ function addRow() {
     attachPriceBehavior(discInp);
 
     attachRowListeners(newRow);
+    updateRowSaveBtnStatus(newRow);
     updateRemoveButtons();
     // Auto-scroll newly added row into view when table grows beyond 4 rows
     try {
@@ -319,14 +436,19 @@ function resetFormForQuoteType() {
     tbody.innerHTML = '';
     const tr = document.createElement('tr');
     tr.innerHTML = `
-        <td>1</td>
+        <td style="text-align:center;color:var(--text-sub);">1</td>
         <td class="product-name-cell"></td>
         <td class="unit-cell"></td>
         <td><input type="number" placeholder="1" min="0" step="0.01" onchange="updateRowTotal(this)"></td>
         <td class="price-cell"></td>
         <td class="discount-cell"></td>
-        <td class="row-total">0</td>
-        <td><button class="remove-btn" onclick="removeRow(this)" disabled>Xóa</button></td>
+        <td class="row-total">0đ</td>
+        <td style="text-align:center;">
+            <button type="button" class="btn-save-item is-empty" disabled onclick="saveRowItemToCatalog(this)" title="Nhập tên hàng hóa để lưu">
+                <span>Lưu SP</span>
+            </button>
+        </td>
+        <td style="text-align:center;"><button class="remove-btn" onclick="removeRow(this)" disabled title="Xóa dòng">✕</button></td>
     `;
     tbody.appendChild(tr);
 
@@ -359,6 +481,8 @@ function resetFormForQuoteType() {
     tr.querySelector('.discount-cell').appendChild(discInp);
     attachPriceBehavior(discInp);
 
+    attachRowListeners(tr);
+    updateRowSaveBtnStatus(tr);
     rowCount = 1;
     updateSummary();
 }
@@ -406,20 +530,25 @@ function applyPointsRow(pts) {
 
     const tr = document.createElement('tr');
     tr.setAttribute('data-points-row', 'true');
-    tr.style.background = '#fff8e1';
+    tr.style.background = 'var(--pastel-50)';
     tr.innerHTML = `
-        <td style="text-align:center;color:#888;">${rowNum}</td>
-        <td class="product-name-cell" style="font-style:italic;color:#7b5800;font-weight:600;">Khấu trừ điểm thưởng</td>
-        <td class="unit-cell" style="text-align:center;color:#555;">Điểm</td>
-        <td style="text-align:center;font-weight:600;">${pts}</td>
-        <td class="price-cell" style="text-align:right;color:#555;">1.000đ</td>
-        <td class="discount-cell" style="text-align:right;color:#aaa;">—</td>
+        <td style="text-align:center;color:var(--text-sub);">${rowNum}</td>
+        <td class="product-name-cell" style="font-style:italic;color:var(--navy-900);font-weight:600;">Khấu trừ điểm thưởng tích lũy</td>
+        <td class="unit-cell" style="text-align:center;color:var(--text-muted);">Điểm</td>
+        <td style="text-align:center;font-weight:700;color:var(--navy-900);">${pts}</td>
+        <td class="price-cell" style="text-align:right;color:var(--text-muted);">1.000đ</td>
+        <td class="discount-cell" style="text-align:right;color:var(--text-sub);">—</td>
         <td class="row-total" data-raw="${lineTotal}" data-disc-row="0"
-            style="text-align:right;color:#c0392b;font-weight:700;">-${fmt(lineTotal)}đ</td>
+            style="text-align:right;color:var(--accent);font-weight:700;">-${fmt(lineTotal)}đ</td>
+        <td style="text-align:center;color:var(--text-sub);">—</td>
         <td style="text-align:center;">
-            <button class="remove-btn" onclick="_removePointsRow();">Xóa</button>
+            <button class="remove-btn" onclick="_removePointsRow();" title="Hủy dùng điểm">✕</button>
         </td>`;
 
     body.appendChild(tr);
     updateSummary();
 }
+
+/** Giữ lại để tương thích ngược nếu có hàm gọi */
+function toggleAllRowSaveCheck(checked) {}
+window.toggleAllRowSaveCheck = toggleAllRowSaveCheck;

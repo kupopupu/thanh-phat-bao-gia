@@ -1,159 +1,290 @@
-/* ==================================================
-   LAYOUT.CSS  –  Header, Page Row, Menu, Container
-   ================================================== */
+/* ==========================================================================
+   LAYOUT.CSS  –  Full-Viewport App Shell (100vh), Header & Full-Height Sidebar
+   ========================================================================== */
 
-/* ---- Header ---- */
+/* ── Top Header (Chuẩn Thương Hiệu Thanh Phát: Xanh Đen → Xanh Thương Hiệu) ── */
 .header {
+    width: 100%;
+    max-width: 1760px;
+    margin: 0 auto;
+    flex-shrink: 0;
     border-radius: var(--radius-lg);
-    overflow: hidden;
-    background: linear-gradient(130deg, #0f4570 0%, #0b6fb5 55%, #29a0d7 100%);
-    box-shadow: var(--shadow-lg);
+    background: linear-gradient(100deg, #0b2545 0%, #12497b 48%, #1d75ae 85%, #2789c7 100%);
+    color: var(--white);
+    box-shadow: var(--shadow-md);
+    border: 1px solid rgba(182, 220, 254, 0.28);
 }
 
 .header .header-inner {
-    max-width: 1600px;
-    margin: 0 auto;
-    padding: 16px 24px;
+    padding: 8px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 20px;
+    gap: 16px;
 }
 
 .logo-section {
     display: flex;
     align-items: center;
+    gap: 12px;
 }
 
 .header .logo-section img {
-    height: 72px !important;
+    height: 30px;
     width: auto;
-    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.24));
+    object-fit: contain;
+    display: block;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
 .company-info {
-    position: static;
-    max-width: 680px;
     text-align: right;
+    border-right: 1px solid rgba(255, 255, 255, 0.24);
+    padding-right: 16px;
 }
 
 .company-info h2 {
-    margin: 0 0 8px;
-    font-size: 26px;
-    color: #eff7ff;
-    letter-spacing: 0.4px;
+    margin: 0 0 1px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
 }
 
 .company-info p {
     margin: 0;
-    color: rgba(245, 251, 255, 0.96);
-    font-size: 14px;
-    font-weight: 500;
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 11px;
+    font-weight: 400;
 }
 
-/* ---- Two-column page row ---- */
+/* ── Master Workspace Grid (Full-Height 100vh, Không Cuộn Trang Ngoài) ────── */
 .page-row {
+    width: 100%;
+    max-width: 1760px;
+    margin: 0 auto;
+    flex: 1;
+    min-height: 0;
     display: grid !important;
-    grid-template-columns: 200px minmax(0, 1fr);
-    gap: 18px !important;
-    margin-top: 18px;
-    padding-top: 0 !important;
-    align-items: start !important;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 12px !important;
+    align-items: stretch !important;
 }
 
-/* ---- Sticky left menu ---- */
+/* ── Sidebar Navigation (Kéo Dài Xuyên Suốt Chạm Đáy Màn Hình) ───────────── */
 #menuInline {
     width: 100% !important;
-    margin: 0 !important;
-    position: sticky !important;
-    top: 12px;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
 }
 
-#menuInline > div {
-    max-height: calc(100vh - 32px) !important;
-    padding: 10px 8px !important;
-    border: 1px solid var(--line) !important;
-    border-radius: var(--radius-lg) !important;
-    background: linear-gradient(180deg, #ffffff, #f8fbff) !important;
-    box-shadow: var(--shadow-md);
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+.sidebar-compact-inner {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 12px 10px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    min-height: 0;
     overflow-y: auto;
 }
 
-#menuInline > div::-webkit-scrollbar {
-    width: 0;
+.sb-nav-top {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
 }
 
-.menu-section {
-    margin-bottom: 14px;
-}
-
-.menu-section h4 {
-    margin: 0 0 10px;
-    padding: 0 0 8px;
-    font-size: 13px;
+.sb-section-label {
+    font-size: 10.5px;
     font-weight: 700;
-    color: var(--ink-soft);
-    border-bottom: 1px solid var(--line);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-sub);
+    padding: 10px 10px 4px;
 }
 
-.menu-item {
+.sb-section-label:first-child {
+    padding-top: 2px;
+}
+
+.sb-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     width: 100%;
-    margin-bottom: 8px;
-    padding: 10px 12px;
-    border-radius: 10px;
-    border: 1px solid #dce6f2;
-    background: #fff;
-    color: #1d3e60;
-    text-align: left;
+    padding: 8px 10px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-secondary);
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: 0.2s ease;
+    text-align: left;
+    transition: all 0.15s ease;
+    line-height: 1.35;
+    outline: none;
 }
 
-.menu-item:hover {
-    transform: translateX(4px);
-    border-color: #b8d4ea;
-    background: #eef7ff;
+.sb-item .sb-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    color: var(--text-muted);
+    transition: color 0.15s ease;
+    flex-shrink: 0;
 }
 
-/* ---- Main container ---- */
+.sb-label-text {
+    flex: 1;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Badge số lượng realtime trên từng mục menu */
+.sb-badge-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 9px;
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--pastel-100);
+    color: var(--brand-blue);
+    border: 1px solid var(--border-light);
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+}
+
+.sb-item:hover {
+    background: var(--pastel-50);
+    color: var(--navy-900);
+    border-color: var(--border-light);
+}
+
+.sb-item:hover .sb-icon {
+    color: var(--brand-blue);
+}
+
+.sb-item:hover .sb-badge-pill {
+    background: var(--pastel-200);
+    border-color: var(--accent);
+}
+
+/* Mục Đang Chọn: Tinh tế chuẩn ERP */
+.sb-item.active {
+    background: var(--pastel-100);
+    color: var(--brand-blue);
+    font-weight: 700;
+    border-color: var(--pastel-200);
+}
+
+.sb-item.active .sb-icon {
+    color: var(--brand-blue);
+}
+
+.sb-item.active .sb-badge-pill {
+    background: var(--brand-blue);
+    color: #ffffff;
+    border-color: var(--brand-blue);
+}
+
+/* Đèn nhịp thở Neon Cloud */
+.sb-sync-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+}
+
+.sb-pulse-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+    flex-shrink: 0;
+    display: inline-block;
+}
+
+/* Chân trang Sidebar */
+.sb-footer {
+    margin-top: auto;
+    padding: 12px 10px 4px;
+    border-top: 1px solid var(--border-light);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.sb-footer-brand {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--navy-900);
+    letter-spacing: -0.1px;
+}
+
+.sb-footer-sub {
+    font-size: 10.5px;
+    color: var(--text-muted);
+}
+
+/* ── Main Content Container (Vừa Khít Chiều Cao 100%) ────────────────────── */
 .container {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    background: var(--bg-card);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-sm);
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
 }
 
 .main-content {
-    padding: 20px;
-}
-
-.section {
-    margin-bottom: 20px;
-    border: 1px solid #dce6f2;
-    border-radius: 12px;
-    padding: 20px;
-    background: #ffffff;
-    box-shadow: 0 4px 12px rgba(29, 62, 96, 0.04);
-}
-
-.section h3,
-.summary h3 {
-    margin: 0 0 16px;
-    font-size: 16px;
-    font-weight: 800;
-    color: #1b4f7a;
+    padding: 12px 18px;
+    height: 100%;
+    min-height: 0;
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    overflow: hidden;
 }
 
-/* ---- Two-column main layout (items + summary) ---- */
-.main-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 350px;
-    gap: 24px;
+#productPage,
+#customerPage {
+    padding: 12px 18px;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    flex-direction: column;
+}
+
+#quoteListContainer {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
 }

@@ -1,30 +1,706 @@
-/* ===================================================
-   MODAL.CSS  –  Overlay backdrops & modal containers
-   =================================================== */
+/* ==========================================================================
+   MODAL.CSS  –  Form Báo Giá 2 Cột Chuẩn ERP & Hệ Thống Cửa Sổ Popup
+   ========================================================================== */
 
-#previewModal,
-#deliveryPreviewModal,
-#finalizePreviewModal,
-#quoteListModal,
-#printInfoModal {
+/* ── Fullscreen Quote Form Modal ─────────────────────────────────────────── */
+#quoteFormModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(6, 19, 37, 0.72);
     backdrop-filter: blur(4px);
-}
-
-#previewModal > div,
-#deliveryPreviewModal > div,
-#finalizePreviewModal > div,
-#quoteListModal > div,
-#printInfoModal > div {
-    border-radius: 16px !important;
-    border: 1px solid #d8e3ef;
+    z-index: 2000;
     overflow: hidden;
+    padding: 16px 20px;
+    box-sizing: border-box;
 }
 
-/* Gradient modal headers */
-#previewModal [style*="background: #1D75AE"],
-#deliveryPreviewModal [style*="background: #1D75AE"],
-#finalizePreviewModal [style*="background: #1D75AE"],
-#quoteListModal [style*="background: #1D75AE"],
-#printInfoModal [style*="background: #1D75AE"] {
-    background: linear-gradient(120deg, #0f4873, #0b6fb5) !important;
+.qfm-inner {
+    max-width: 1520px;
+    height: calc(100vh - 32px);
+    margin: 0 auto;
+    background: var(--bg-page);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+/* Modal Sticky Header (Chuẩn Thương Hiệu Thanh Phát) */
+.qfm-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 22px;
+    background: linear-gradient(100deg, #0b2545 0%, #12497b 55%, #1d75ae 100%);
+    color: var(--white);
+    border-bottom: 1px solid rgba(182, 220, 254, 0.22);
+    flex-shrink: 0;
+    z-index: 10;
+}
+
+.qfm-header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.qfm-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.1px;
+}
+
+.qfm-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#currentQuoteDisplay {
+    font-size: 12px;
+    font-weight: 700;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    letter-spacing: 0.4px;
+}
+
+.qfm-close {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-md);
+    padding: 6px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--white);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.qfm-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Modal Scrollable Body */
+.qfm-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Section Containers inside Form */
+.customer-section,
+.items-section {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    box-shadow: var(--shadow-sm);
+}
+
+.section-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-light);
+    flex-wrap: wrap;
+}
+
+.section-title {
+    margin: 0;
+    font-size: 12.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--navy-900);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-title::before {
+    content: "";
+    display: inline-block;
+    width: 4px;
+    height: 14px;
+    border-radius: 2px;
+    background: var(--accent);
+}
+
+/* Lưới 3 cột gọn gàng cho Thông tin Khách hàng */
+.customer-grid-3col {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1.8fr;
+    gap: 14px;
+    align-items: end;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.form-field label {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--text-secondary);
+}
+
+/* 2-Column Split Layout: Bảng Hàng Hóa (Trái) + Tổng Kết Đơn Hàng (Phải) */
+.main-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 330px;
+    gap: 16px;
+    align-items: start;
+}
+
+/* Modal Sticky Action Footer (Phân tách Trái – Phải) */
+.qfm-action-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 24px;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    z-index: 10;
+}
+
+.qfm-action-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+}
+
+/* ── Custom Autocomplete Dropdowns (Khách hàng & Sản phẩm – Bo tròn 2 góc) ── */
+.cust-dropdown,
+.prod-dropdown {
+    display: none;
+    position: fixed;
+    background: #0d2137;
+    border: 1px solid #1e3a5f;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+    z-index: 99999;
+    max-height: 250px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+}
+
+/* Khi thả xuống dưới: bo tròn 2 góc dưới */
+.cust-dropdown,
+.prod-dropdown,
+.cust-dropdown.open-down,
+.prod-dropdown.open-down {
+    border-radius: 0 0 12px 12px !important;
+    border-top: none !important;
+}
+
+/* Khi mở ngược lên trên: bo tròn 2 góc trên */
+.cust-dropdown.open-up,
+.prod-dropdown.open-up {
+    border-radius: 12px 12px 0 0 !important;
+    border-bottom: none !important;
+}
+
+/* Từng mục trong dropdown */
+.cust-drop-item,
+.prod-drop-item {
+    padding: 9px 13px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    cursor: pointer;
+    transition: all 0.12s ease;
+}
+
+.cust-drop-item:last-child,
+.prod-drop-item:last-child {
+    border-bottom: none;
+    border-radius: 0 0 11px 11px;
+}
+
+.cust-drop-item:hover,
+.prod-drop-item:hover {
+    background: rgba(56, 189, 248, 0.14);
+}
+
+.prod-drop-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.prod-drop-name,
+.cust-drop-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #f8fafc;
+}
+
+.prod-drop-price {
+    font-size: 12px;
+    font-weight: 700;
+    color: #38bdf8;
+    white-space: nowrap;
+}
+
+.prod-drop-unit,
+.cust-drop-addr {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.cust-drop-phone {
+    font-size: 12px;
+    font-weight: 600;
+    color: #38bdf8;
+    margin-left: 8px;
+}
+
+/* Chế độ Sáng (Light Mode) */
+body:not(.dark-mode) .cust-dropdown,
+body:not(.dark-mode) .prod-dropdown {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12) !important;
+}
+
+body:not(.dark-mode) .cust-drop-item,
+body:not(.dark-mode) .prod-drop-item {
+    border-bottom-color: #f1f5f9 !important;
+}
+
+body:not(.dark-mode) .cust-drop-item:hover,
+body:not(.dark-mode) .prod-drop-item:hover {
+    background: #f0f9ff !important;
+}
+
+body:not(.dark-mode) .prod-drop-name,
+body:not(.dark-mode) .cust-drop-name {
+    color: #0f172a !important;
+}
+
+body:not(.dark-mode) .prod-drop-price,
+body:not(.dark-mode) .cust-drop-phone {
+    color: #0284c7 !important;
+}
+
+.cust-drop-phone {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-left: 8px;
+}
+
+.cust-drop-addr {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* ── Mini Modals (Confirm Order, Edit Product, Points, Preview) ──────────── */
+#confirmOrderModal,
+#editProductModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(6, 19, 37, 0.65);
+    backdrop-filter: blur(3px);
+    z-index: 5000;
+    align-items: center;
+    justify-content: center;
+}
+
+#editProductModal {
+    z-index: 6000;
+}
+
+#confirmOrderModal.show,
+#editProductModal.show {
+    display: flex;
+}
+
+.com-box,
+.ep-box {
+    background: var(--bg-surface);
+    border-radius: var(--radius-lg);
+    padding: 24px 28px;
+    max-width: 420px;
+    width: 92%;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border);
+}
+
+.com-box {
+    text-align: center;
+}
+
+.com-box h4,
+.ep-box h4 {
+    margin: 0 0 8px;
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--navy-900);
+}
+
+.ep-box h4 {
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.com-box .com-quote-no {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.com-box .com-total {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--navy-900);
+    background: var(--pastel-50);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px;
+    margin-bottom: 16px;
+}
+
+.com-btns {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 14px;
+}
+
+.com-btn-deposit {
+    flex: 1;
+    background: var(--brand-blue);
+    color: var(--white);
+    border: 1px solid var(--brand-blue);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.com-btn-deposit:hover {
+    background: var(--navy-900);
+}
+
+.com-btn-nodeposit {
+    flex: 1;
+    background: var(--pastel-50);
+    color: var(--navy-900);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.com-btn-nodeposit:hover {
+    background: var(--pastel-100);
+    border-color: var(--pastel-200);
+}
+
+.com-cancel {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 4px 10px;
+}
+
+.com-cancel:hover {
+    color: var(--navy-900);
+}
+
+.ep-row {
+    margin-bottom: 14px;
+}
+
+.ep-row label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+}
+
+.ep-btn-save {
+    background: var(--brand-blue);
+    color: var(--white);
+    border: 1px solid var(--brand-blue);
+    border-radius: var(--radius-md);
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.ep-btn-save:hover {
+    background: var(--navy-900);
+}
+
+.ep-btn-cancel {
+    background: var(--pastel-50);
+    color: var(--navy-900);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.ep-btn-cancel:hover {
+    background: var(--pastel-100);
+}
+
+/* ── Full-screen Canvas Preview (Bỏ Khung, Zoom & Pan Mượt Mà) ────────── */
+.preview-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(4, 11, 22, 0.92);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 3000;
+    overflow: hidden;
+    padding: 0;
+    user-select: none;
+}
+
+/* Floating Action Toolbar góc trên bên phải */
+.preview-floating-toolbar {
+    position: fixed;
+    top: 18px;
+    right: 24px;
+    z-index: 3100;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: rgba(11, 37, 69, 0.92);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(56, 189, 248, 0.28);
+    border-radius: 30px;
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    user-select: none;
+    animation: pftSlideDown 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pftSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Cụm Zoom */
+.preview-zoom-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    background: rgba(4, 15, 30, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 2px 4px;
+}
+
+.pft-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: #bae0fd;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+}
+
+.pft-btn:hover {
+    background: rgba(56, 189, 248, 0.2);
+    color: #ffffff;
+}
+
+.pft-btn:active {
+    transform: scale(0.92);
+}
+
+.pft-zoom-val {
+    display: inline-block;
+    min-width: 44px;
+    text-align: center;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #38bdf8;
+    cursor: pointer;
+    padding: 0 4px;
+    letter-spacing: -0.2px;
+}
+
+.pft-zoom-val:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+/* Vạch ngăn */
+.pft-divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.15);
+    margin: 0 2px;
+}
+
+/* Nút chính (Xuất PDF / Chốt file) */
+.pft-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 32px;
+    padding: 0 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    background: linear-gradient(135deg, #1d75ae 0%, #166092 100%);
+    color: #ffffff;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(22, 96, 146, 0.35);
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.pft-btn-primary:hover {
+    background: linear-gradient(135deg, #2284c3 0%, #1a6fa8 100%);
+    box-shadow: 0 4px 14px rgba(56, 189, 248, 0.4);
+    border-color: #38bdf8;
+    transform: translateY(-1px);
+}
+
+.pft-btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Nút phụ (Xuất JPG) */
+.pft-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 32px;
+    padding: 0 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.1);
+    color: #f0f7ff;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.pft-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(56, 189, 248, 0.5);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.pft-btn-secondary:active {
+    transform: translateY(0);
+}
+
+/* Nút Đóng */
+.pft-btn-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.08);
+    color: #bae0fd;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+}
+
+.pft-btn-close:hover {
+    background: rgba(239, 68, 68, 0.85);
+    border-color: rgba(239, 68, 68, 0.9);
+    color: #ffffff;
+    transform: rotate(90deg);
+}
+
+/* Viewport vùng hiển thị toàn màn hình không khung */
+.preview-canvas-viewport {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 24px;
+    box-sizing: border-box;
+    cursor: default;
+}
+
+.preview-canvas-viewport .preview-scale {
+    transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: center center;
+    will-change: transform;
+}
+
+.preview-canvas-viewport .a4-page {
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+    border-radius: 2px !important;
+    background: #ffffff !important;
 }

@@ -18,7 +18,7 @@
 function handleProductXlsx(event) {
     // Guard: only allow for in-ly quotes
     if (typeof currentQuoteType !== 'undefined' && currentQuoteType !== 'cup') {
-        alert('⚠️ Import sản phẩm chỉ dành cho chế độ In Ly. Hãy chuyển sang In Ly rồi thử lại.');
+        alert('Import sản phẩm chỉ dành cho chế độ In Ly. Hãy chuyển sang In Ly rồi thử lại.');
         event.target.value = '';
         return;
     }
@@ -44,10 +44,10 @@ function handleProductXlsx(event) {
                     price: row[2] ? parseFloat(String(row[2]).replace(/,/g, '')) || 0 : 0,
                 });
             }
-            showNotification('✅ Đã tải ' + productList.length + ' sản phẩm từ Excel');
+            showNotification('Đã tải ' + productList.length + ' sản phẩm từ Excel');
         } catch (err) {
             console.error('Error parsing product xlsx', err);
-            alert('❌ Không thể đọc file sản phẩm. Hãy kiểm tra định dạng Excel.');
+            alert('Không thể đọc file sản phẩm. Hãy kiểm tra định dạng Excel.');
         }
     };
     reader.readAsArrayBuffer(file);

@@ -49,9 +49,9 @@ function resetImageUploadButtons() {
         const btn = document.getElementById(id);
         if (!btn) return;
         if (id === 'designUploadBtn') {
-            btn.textContent = uploadedImages.design  ? '✓ Đã có thiết kế (đổi)' : '📎 Chọn file thiết kế';
+            btn.textContent = uploadedImages.design  ? 'Đã có thiết kế (đổi)' : 'Chọn file thiết kế';
         } else {
-            btn.textContent = uploadedImages.mockup  ? '✓ Đã có mockup (đổi)'   : '📎 Chọn file mockup';
+            btn.textContent = uploadedImages.mockup  ? 'Đã có mockup (đổi)'   : 'Chọn file mockup';
         }
     });
 }
@@ -190,6 +190,6 @@ function handleImageUpload(event) {
 function updateImageUploadButtons() {
     const designBtn = document.getElementById('designUploadBtn');
     const mockupBtn = document.getElementById('mockupUploadBtn');
-    if (designBtn) designBtn.textContent = uploadedImages.design ? '✓ Đã có thiết kế (đổi)' : '📎 Chọn file thiết kế';
-    if (mockupBtn) mockupBtn.textContent = uploadedImages.mockup ? '✓ Đã có mockup (đổi)'   : '📎 Chọn file mockup';
+    if (designBtn) designBtn.textContent = uploadedImages.design ? 'Đã có thiết kế (đổi)' : 'Chọn file thiết kế';
+    if (mockupBtn) mockupBtn.textContent = uploadedImages.mockup ? 'Đã có mockup (đổi)'   : 'Chọn file mockup';
 }

@@ -11,10 +11,22 @@
 
 /* ── API sync helpers ──────────────────────────────────────────────── */
 
-/** Kiểm tra xem có đang chạy trên Vercel (hoặc localhost với vercel dev) */
+/** Lấy URL gốc của Backend API (tự động trỏ sang port 5000 khi mở qua Live Preview / Live Server) */
+function _getApiBase() {
+    if (typeof window === 'undefined') return '';
+    if (window.location.port !== '5000' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:')) {
+        return 'http://localhost:5000';
+    }
+    return '';
+}
+
+function _apiUrl(path) {
+    return _getApiBase() + path;
+}
+
+/** Kiểm tra xem có môi trường web */
 function _hasApiBackend() {
-    return typeof window !== 'undefined' &&
-        (window.location.hostname !== '' && window.location.hostname !== 'file');
+    return typeof window !== 'undefined';
 }
 
 /**
@@ -23,7 +35,7 @@ function _hasApiBackend() {
  */
 function _syncQuoteToAPI(quote) {
     if (!_hasApiBackend() || !quote || !quote.id) return;
-    fetch('/api/quotes', {
+    fetch(_apiUrl('/api/quotes'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(quote),
@@ -38,7 +50,7 @@ function _syncQuoteToAPI(quote) {
  */
 function _deleteQuoteFromAPI(id) {
     if (!_hasApiBackend() || !id) return;
-    fetch('/api/quotes/' + encodeURIComponent(id), {
+    fetch(_apiUrl('/api/quotes/' + encodeURIComponent(id)), {
         method: 'DELETE',
     }).catch(() => {/* silent */});
 }
@@ -48,7 +60,7 @@ function _deleteQuoteFromAPI(id) {
  */
 function _syncCustomerToAPI(customer) {
     if (!_hasApiBackend() || !customer || !customer.code) return;
-    fetch('/api/customers', {
+    fetch(_apiUrl('/api/customers'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(customer),
@@ -62,7 +74,7 @@ function _syncCustomerToAPI(customer) {
  */
 function _syncProductToAPI(product) {
     if (!_hasApiBackend() || !product || !product.name) return;
-    fetch('/api/products', {
+    fetch(_apiUrl('/api/products'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(product),
@@ -76,7 +88,7 @@ function _syncProductToAPI(product) {
  */
 function _deleteProductFromAPI(name) {
     if (!_hasApiBackend() || !name) return;
-    fetch('/api/products?name=' + encodeURIComponent(name), {
+    fetch(_apiUrl('/api/products?name=' + encodeURIComponent(name)), {
         method: 'DELETE',
     }).catch(() => {/* silent */});
 }
@@ -99,7 +111,7 @@ function persistSavedProducts() {
     if (_hasApiBackend()) {
         clearTimeout(_productSyncTimer);
         _productSyncTimer = setTimeout(function () {
-            fetch('/api/products?bulk=1', {
+            fetch(_apiUrl('/api/products?bulk=1'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(savedProducts || []),
@@ -176,7 +188,7 @@ function deleteProduct(name) {
  * các thay đổi (confirm, thu tiền...) mà máy A vừa thực hiện.
  */
 function _pullAndMergeQuotes() {
-    fetch('/api/quotes')
+    fetch(_apiUrl('/api/quotes'))
         .then(r => r.ok ? r.json() : Promise.reject(r.status))
         .then(function(apiQuotes) {
             if (!Array.isArray(apiQuotes)) return;
@@ -205,7 +217,7 @@ function _pullAndMergeQuotes() {
 function initApiSync() {
     if (!_hasApiBackend()) return;
     // Quotes
-    fetch('/api/quotes')
+    fetch(_apiUrl('/api/quotes'))
         .then(r => r.ok ? r.json() : Promise.reject(r.status))
         .then(apiQuotes => {
             if (!Array.isArray(apiQuotes)) return;
@@ -256,6 +268,7 @@ function initApiSync() {
                 persistSavedQuotesLocalOnly();
                 if (typeof renderQuoteList     === 'function') renderQuoteList('');
                 if (typeof renderDashboardStats === 'function') renderDashboardStats();
+                if (typeof updateSidebarBadges === 'function') updateSidebarBadges();
             }
         })
         .catch(function(e) { console.warn('[DB] load quotes error:', e); });
@@ -264,7 +277,7 @@ function initApiSync() {
     setInterval(_pullAndMergeQuotes, 30000);
 
     // Customers
-    fetch('/api/customers')
+    fetch(_apiUrl('/api/customers'))
         .then(r => r.ok ? r.json() : Promise.reject(r.status))
         .then(apiCustomers => {
             if (!apiCustomers || typeof apiCustomers !== 'object') return;
@@ -276,11 +289,12 @@ function initApiSync() {
                 }
             });
             persistSavedCustomersLocalOnly();
+            if (typeof updateSidebarBadges === 'function') updateSidebarBadges();
         })
         .catch(function(e) { console.warn('[DB] load customers error:', e); });
 
     // Products
-    fetch('/api/products')
+    fetch(_apiUrl('/api/products'))
         .then(r => r.ok ? r.json() : Promise.reject(r.status))
         .then(apiProducts => {
             if (!Array.isArray(apiProducts)) return;
@@ -310,6 +324,9 @@ function initApiSync() {
                     _plAllData = savedProducts.slice();
                     renderProductPage(typeof _plSearchTerm !== 'undefined' ? _plSearchTerm : '');
                 }
+                if (typeof updateSidebarBadges === 'function') updateSidebarBadges();
+            } else {
+                if (typeof updateSidebarBadges === 'function') updateSidebarBadges();
             }
         })
         .catch(function(e) { console.warn('[DB] load products error:', e); });
@@ -353,7 +370,7 @@ function persistSavedQuotes() {
     if (_hasApiBackend()) {
         clearTimeout(_quoteSyncTimer);
         _quoteSyncTimer = setTimeout(function () {
-            fetch('/api/quotes?bulk=1', {
+            fetch(_apiUrl('/api/quotes?bulk=1'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(savedQuotes || []),
@@ -377,7 +394,7 @@ function deleteQuoteFromStorage(id) {
     persistSavedQuotesLocalOnly();
 
     if (_hasApiBackend()) {
-        fetch('/api/quotes?id=' + encodeURIComponent(id), {
+        fetch(_apiUrl('/api/quotes?id=' + encodeURIComponent(id)), {
             method: 'DELETE'
         }).then(function(r) {
             if (!r.ok) r.text().then(t => console.warn('[DB] DELETE quote failed:', r.status, t));
@@ -437,4 +454,134 @@ function upsertCustomer(code, name, phone, address, createdAt) {
     } catch (e) {
         console.error('upsertCustomer error', e);
     }
+}
+
+/* ── Quản lý Dữ liệu: Sao lưu / Khôi phục / Đồng bộ ────────────────────────── */
+
+/** Tải toàn bộ dữ liệu (báo giá, khách hàng, sản phẩm) về máy file JSON */
+function exportAllDataBackup() {
+    loadSavedQuotes();
+    loadSavedProducts();
+    loadSavedCustomers();
+
+    const backupData = {
+        app: 'ThanhPhatERP',
+        version: '2.0',
+        exportedAt: new Date().toISOString(),
+        quotes: savedQuotes || [],
+        products: savedProducts || [],
+        customers: savedCustomers || {}
+    };
+
+    const str = JSON.stringify(backupData, null, 2);
+    const blob = new Blob([str], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateStr = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `ThanhPhat_Backup_${dateStr}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+
+    if (typeof showNotification === 'function') {
+        showNotification(`Đã tải file sao lưu dữ liệu (${savedQuotes.length} báo giá, ${savedProducts.length} sản phẩm)!`);
+    }
+}
+
+/** Đọc file JSON và khôi phục vào hệ thống */
+function handleBackupRestore(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (!data || (!data.quotes && !data.products)) {
+                alert('Tập tin không đúng cấu trúc sao lưu của Thanh Phát!');
+                return;
+            }
+
+            if (!confirm(`Xác nhận khôi phục dữ liệu từ bản sao lưu ngày ${(data.exportedAt || '').slice(0,10)}?\nLưu ý: Dữ liệu hiện tại sẽ được cập nhật đồng bộ.`)) {
+                return;
+            }
+
+            if (Array.isArray(data.quotes)) {
+                savedQuotes = data.quotes;
+                persistSavedQuotesLocalOnly();
+            }
+            if (Array.isArray(data.products)) {
+                savedProducts = data.products;
+                persistSavedProductsLocalOnly();
+            }
+            if (data.customers && typeof data.customers === 'object') {
+                savedCustomers = data.customers;
+                persistSavedCustomersLocalOnly();
+            }
+
+            if (typeof renderQuoteList === 'function') renderQuoteList();
+            if (typeof renderDashboardStats === 'function') renderDashboardStats();
+            if (typeof showNotification === 'function') {
+                showNotification('Khôi phục dữ liệu thành công!', 'success');
+            }
+        } catch (err) {
+            alert('Lỗi đọc file: ' + err.message);
+        } finally {
+            event.target.value = '';
+        }
+    };
+    reader.readAsText(file);
+}
+
+/** Kích hoạt đồng bộ kiểm tra kết nối Neon PostgreSQL */
+function syncCloudDatabase() {
+    if (!_hasApiBackend()) {
+        if (typeof showNotification === 'function') showNotification('Hệ thống đang chạy offline.', 'info');
+        return;
+    }
+
+    if (typeof showNotification === 'function') {
+        showNotification('Đang kiểm tra kết nối cơ sở dữ liệu Neon...', 'info');
+    }
+
+    fetch(_apiUrl('/api/health'))
+        .then(r => r.json())
+        .then(info => {
+            if (info && info.status === 'ok') {
+                const now = new Date();
+                const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                const statusEl = document.getElementById('sbSyncStatusText');
+                if (statusEl) statusEl.textContent = 'Đã đồng bộ ' + timeStr;
+
+                // Tải lại báo giá mới nhất từ DB
+                if (typeof initQuotesFromAPI === 'function') {
+                    initQuotesFromAPI().then(() => {
+                        if (typeof renderQuoteList === 'function') renderQuoteList();
+                        if (typeof renderDashboardStats === 'function') renderDashboardStats();
+                        if (typeof updateSidebarBadges === 'function') updateSidebarBadges();
+                        if (typeof showNotification === 'function') {
+                            showNotification('Đã kết nối và đồng bộ thành công với Neon DB!', 'success');
+                        }
+                    });
+                } else {
+                    if (typeof updateSidebarBadges === 'function') updateSidebarBadges();
+                    if (typeof showNotification === 'function') {
+                        showNotification('Cơ sở dữ liệu trực tuyến hoạt động tốt!', 'success');
+                    }
+                }
+            } else {
+                const statusEl = document.getElementById('sbSyncStatusText');
+                if (statusEl) statusEl.textContent = 'Lỗi DB';
+                if (typeof showNotification === 'function') {
+                    showNotification('Không phản hồi từ cơ sở dữ liệu.', 'error');
+                }
+            }
+        })
+        .catch(err => {
+            const statusEl = document.getElementById('sbSyncStatusText');
+            if (statusEl) statusEl.textContent = 'Ngoại tuyến';
+            if (typeof showNotification === 'function') {
+                showNotification('Lỗi kết nối: ' + err.message, 'error');
+            }
+        });
 }

@@ -18,104 +18,119 @@
  * @returns {string}  Inner HTML string for the A4 printable area
  */
 function generateQuoteHTMLFullWidth() {
-    const customerName    = document.getElementById('customerName').value    || 'Chưa nhập';
-    const customerPhone   = document.getElementById('customerPhone').value   || 'Chưa nhập';
-    const customerAddress = document.getElementById('customerAddress').value || 'Chưa nhập';
+  const customerName = document.getElementById('customerName').value || 'Chưa nhập';
+  const customerPhone = document.getElementById('customerPhone').value || 'Chưa nhập';
+  const customerAddress = document.getElementById('customerAddress').value || 'Chưa nhập';
 
-    let subtotal = 0;
-    let discountAmt = 0;
-    const vat = parseFloat(document.getElementById('vat').value) || 0;
+  let subtotal = 0;
+  let discountAmt = 0;
+  const vat = parseFloat(document.getElementById('vat').value) || 0;
 
-    // Count valid items first to compute dynamic scaling
-    let itemCount = 0;
-    const rows = document.querySelectorAll('#itemsBody tr');
-    rows.forEach((row) => {
-      if (row.getAttribute('data-points-row') === 'true') {
-        const qty = parseInt(String(row.cells[3]?.textContent || '0').replace(/[^0-9]/g, ''), 10) || 0;
-        if (qty > 0) itemCount++;
-        return;
-      }
-      const nameInp = row.querySelector('.product-name-cell input') || row.cells[1]?.querySelector('input');
-      if (nameInp?.value) itemCount++;
-    });
-
-    const _expCtx = window._quoteExportCtx;
-    const _isDepositedExport = _expCtx && _expCtx.orderStatus === 'deposited' && _expCtx.depositAmount > 0;
-    const _exportDepositAmt  = _isDepositedExport ? Math.round(_expCtx.depositAmount) : 0;
-    if (_isDepositedExport) itemCount++; // include deposit row
-
-    // Fixed layout for 15 product rows to fit 1 A4 page perfectly with generous spacing & large QR
-    const totalRows = itemCount;
-    let headerPadding = '14px 22px';
-    let logoHeight = '52px';
-    let titleFontSize = '40px';
-    let sectionMargin = '10px';
-    let custPadding = '10px 14px';
-    let custFontSize = '12px';
-    let thPadding = '8px 8px';
-    let thFontSize = '13px';
-    let tdPadding = '5.5px 8px';
-    let tdFontSize = '11.5px';
-    let qrMaxH = '190px';
-    let totalsPadding = '12px 14px';
-    let totalsFontSize = '12px';
-    let totalsTitleFontSize = '14px';
-    let notesFontSize = '11px';
-    let notesLineHeight = '1.4';
-    let sigHeight = '45px';
-    let footerMargin = '10px';
-    let footerFontSize = '12.5px';
-    let footerSubFontSize = '14px';
-
-    if (totalRows > 15) {
-        headerPadding = '8px 14px';
-        logoHeight = '36px';
-        titleFontSize = '28px';
-        sectionMargin = '4px';
-        custPadding = '5px 8px';
-        custFontSize = '10px';
-        thPadding = '4px 4px';
-        thFontSize = '10.5px';
-        tdPadding = '2px 4px';
-        tdFontSize = '9.5px';
-        qrMaxH = '90px';
-        totalsPadding = '6px 8px';
-        totalsFontSize = '9.5px';
-        totalsTitleFontSize = '11px';
-        notesFontSize = '8.5px';
-        notesLineHeight = '1.25';
-        sigHeight = '22px';
-        footerMargin = '4px';
-        footerFontSize = '10px';
-        footerSubFontSize = '11px';
+  // Count valid items first to compute dynamic scaling
+  let itemCount = 0;
+  const rows = document.querySelectorAll('#itemsBody tr');
+  rows.forEach((row) => {
+    if (row.getAttribute('data-points-row') === 'true') {
+      const qty = parseInt(String(row.cells[3]?.textContent || '0').replace(/[^0-9]/g, ''), 10) || 0;
+      if (qty > 0) itemCount++;
+      return;
     }
+    const nameInp = row.querySelector('.product-name-cell input') || row.cells[1]?.querySelector('input');
+    if (nameInp?.value) itemCount++;
+  });
 
-    // Rows HTML
-    let itemsHTML = '';
-    let currIndex = 0;
-    rows.forEach((row) => {
-      // ── Special: points-redemption row ──
-      if (row.getAttribute('data-points-row') === 'true') {
-        const totalCell = row.querySelector('.row-total');
-        const qty       = parseInt(String(row.cells[3]?.textContent || '0').replace(/[^0-9]/g, ''), 10) || 0;
-        let lineTotal   = 0;
-        if (totalCell) {
-          const rawVal = totalCell.dataset ? totalCell.dataset.raw : null;
-          if (rawVal != null && rawVal !== '') {
-            lineTotal = parseInt(String(rawVal), 10) || 0;
-          } else {
-            const textVal = String(totalCell.textContent || '').replace(/[^0-9\-]/g, '');
-            lineTotal = parseInt(textVal, 10) || 0;
-          }
-        }
-        if (lineTotal === 0 && qty > 0) {
-          lineTotal = -(qty * 1000);
-        }
+  const _expCtx = window._quoteExportCtx;
+  let _isCompletedExport = false;
+  if (_expCtx && (_expCtx.orderStatus === 'completed' || _expCtx.paid === true)) {
+    _isCompletedExport = true;
+  }
+  // Nếu chưa xác định từ _expCtx, kiểm tra trực tiếp từ savedQuotes theo quoteNumber
+  if (!_isCompletedExport) {
+    try {
+      if (typeof loadSavedQuotes === 'function') loadSavedQuotes();
+      const curQ = (window.savedQuotes || []).find(q => q.id === quoteNumber || (window.editingQuoteId && q.id === window.editingQuoteId));
+      if (curQ && (curQ.orderStatus === 'completed' || curQ.paid === true || (Number(curQ.receivedAmount) > 0 && Number(curQ.receivedAmount) >= Number(curQ.total)))) {
+        _isCompletedExport = true;
+      }
+    } catch (e) { }
+  }
 
-        if (lineTotal !== 0) {
-          subtotal += lineTotal;
-          const rowBg = currIndex % 2 === 0 ? '#ffffff' : '#f8f9fa';
-          itemsHTML += `
+  const _isDepositedExport = !_isCompletedExport && _expCtx && _expCtx.orderStatus === 'deposited' && _expCtx.depositAmount > 0;
+  const _exportDepositAmt = _isDepositedExport ? Math.round(_expCtx.depositAmount) : 0;
+  if (_isDepositedExport) itemCount++; // include deposit row
+
+  // Fixed layout for 15 product rows to fit 1 A4 page perfectly with generous spacing & large QR
+  const totalRows = itemCount;
+  let headerPadding = '14px 22px';
+  let logoHeight = '52px';
+  let titleFontSize = '40px';
+  let sectionMargin = '10px';
+  let custPadding = '10px 14px';
+  let custFontSize = '12px';
+  let thPadding = '8px 8px';
+  let thFontSize = '13px';
+  let tdPadding = '5.5px 8px';
+  let tdFontSize = '11.5px';
+  let qrMaxH = '190px';
+  let totalsPadding = '12px 14px';
+  let totalsFontSize = '12px';
+  let totalsTitleFontSize = '14px';
+  let notesFontSize = '11px';
+  let notesLineHeight = '1.4';
+  let sigHeight = '45px';
+  let footerMargin = '10px';
+  let footerFontSize = '12.5px';
+  let footerSubFontSize = '14px';
+
+  if (totalRows > 15) {
+    headerPadding = '8px 14px';
+    logoHeight = '36px';
+    titleFontSize = '28px';
+    sectionMargin = '4px';
+    custPadding = '5px 8px';
+    custFontSize = '10px';
+    thPadding = '4px 4px';
+    thFontSize = '10.5px';
+    tdPadding = '2px 4px';
+    tdFontSize = '9.5px';
+    qrMaxH = '90px';
+    totalsPadding = '6px 8px';
+    totalsFontSize = '9.5px';
+    totalsTitleFontSize = '11px';
+    notesFontSize = '8.5px';
+    notesLineHeight = '1.25';
+    sigHeight = '22px';
+    footerMargin = '4px';
+    footerFontSize = '10px';
+    footerSubFontSize = '11px';
+  }
+
+  // Rows HTML
+  let itemsHTML = '';
+  let currIndex = 0;
+  rows.forEach((row) => {
+    // ── Special: points-redemption row ──
+    if (row.getAttribute('data-points-row') === 'true') {
+      const totalCell = row.querySelector('.row-total');
+      const qty = parseInt(String(row.cells[3]?.textContent || '0').replace(/[^0-9]/g, ''), 10) || 0;
+      let lineTotal = 0;
+      if (totalCell) {
+        const rawVal = totalCell.dataset ? totalCell.dataset.raw : null;
+        if (rawVal != null && rawVal !== '') {
+          lineTotal = parseInt(String(rawVal), 10) || 0;
+        } else {
+          const textVal = String(totalCell.textContent || '').replace(/[^0-9\-]/g, '');
+          lineTotal = parseInt(textVal, 10) || 0;
+        }
+      }
+      if (lineTotal === 0 && qty > 0) {
+        lineTotal = -(qty * 1000);
+      }
+
+      if (lineTotal !== 0) {
+        subtotal += lineTotal;
+        const rowBg = currIndex % 2 === 0 ? '#ffffff' : '#f8f9fa';
+        itemsHTML += `
         <tr style="background:${rowBg};">
           <td style="padding:${tdPadding};text-align:center;border-right:1px solid #e9ecef;font-size:${tdFontSize};font-weight:500;color:#495057;">${currIndex + 1}</td>
           <td style="padding:${tdPadding};border-right:1px solid #e9ecef;font-size:${tdFontSize};color:#7b5800;font-weight:600;font-style:italic;">Khấu trừ điểm thưởng</td>
@@ -125,40 +140,40 @@ function generateQuoteHTMLFullWidth() {
           <td style="padding:${tdPadding};text-align:right;border-right:1px solid #e9ecef;font-size:${tdFontSize};color:#adb5bd;">—</td>
           <td style="padding:${tdPadding};text-align:right;font-size:${tdFontSize};color:#c0392b;font-weight:700;">-${new Intl.NumberFormat('vi-VN').format(Math.abs(lineTotal))}đ</td>
         </tr>`;
-          currIndex++;
-        }
-        return;
+        currIndex++;
       }
+      return;
+    }
 
-      const nameInp = row.querySelector('.product-name-cell input') || row.cells[1]?.querySelector('input');
-      const unitInp = row.querySelector('.unit-cell input')         || row.cells[2]?.querySelector('input');
-      const qtyInp  = row.cells[3]?.querySelector('input');
+    const nameInp = row.querySelector('.product-name-cell input') || row.cells[1]?.querySelector('input');
+    const unitInp = row.querySelector('.unit-cell input') || row.cells[2]?.querySelector('input');
+    const qtyInp = row.cells[3]?.querySelector('input');
 
-      const itemName = nameInp?.value || '';
-      const unit     = unitInp?.value || '';
-      const quantity = parseFloat(qtyInp?.value || 0) || 0;
-      const price    = getPriceThousandsFromRow(row) || 0;
+    const itemName = nameInp?.value || '';
+    const unit = unitInp?.value || '';
+    const quantity = parseFloat(qtyInp?.value || 0) || 0;
+    const price = getPriceThousandsFromRow(row) || 0;
 
-      let discountPerUnit = 0;
-      const discInp = row.querySelector('.discount-input');
-      if (discInp && discInp.dataset && discInp.dataset.raw != null) {
-        discountPerUnit = parseFloat(discInp.dataset.raw) || 0;
-      } else if (row.querySelector('.row-total') && row.querySelector('.row-total').dataset && row.querySelector('.row-total').dataset.discRow) {
-        const discRowTotal = parseFloat(row.querySelector('.row-total').dataset.discRow) || 0;
-        discountPerUnit = quantity > 0 ? (discRowTotal / quantity) : 0;
-      } else if (row.dataset && row.dataset.rowDiscount) {
-        discountPerUnit = parseFloat(row.dataset.rowDiscount) || 0;
-      }
+    let discountPerUnit = 0;
+    const discInp = row.querySelector('.discount-input');
+    if (discInp && discInp.dataset && discInp.dataset.raw != null) {
+      discountPerUnit = parseFloat(discInp.dataset.raw) || 0;
+    } else if (row.querySelector('.row-total') && row.querySelector('.row-total').dataset && row.querySelector('.row-total').dataset.discRow) {
+      const discRowTotal = parseFloat(row.querySelector('.row-total').dataset.discRow) || 0;
+      discountPerUnit = quantity > 0 ? (discRowTotal / quantity) : 0;
+    } else if (row.dataset && row.dataset.rowDiscount) {
+      discountPerUnit = parseFloat(row.dataset.rowDiscount) || 0;
+    }
 
-      const effectiveUnit = Math.max(0, price - discountPerUnit);
-      const lineTotal = quantity * effectiveUnit;
+    const effectiveUnit = Math.max(0, price - discountPerUnit);
+    const lineTotal = quantity * effectiveUnit;
 
-      subtotal += quantity * price;
-      discountAmt += quantity * discountPerUnit;
+    subtotal += quantity * price;
+    discountAmt += quantity * discountPerUnit;
 
-      if (itemName) {
-        const rowBg = currIndex % 2 === 0 ? '#ffffff' : '#f8f9fa';
-        itemsHTML += `
+    if (itemName) {
+      const rowBg = currIndex % 2 === 0 ? '#ffffff' : '#f8f9fa';
+      itemsHTML += `
         <tr style="background:${rowBg};">
           <td style="padding:${tdPadding};text-align:center;border-right:1px solid #e9ecef;font-size:${tdFontSize};font-weight:500;color:#495057;">${currIndex + 1}</td>
           <td style="padding:${tdPadding};border-right:1px solid #e9ecef;font-size:${tdFontSize};color:#2c3e50;font-weight:500;">${escapeHtml(itemName)}</td>
@@ -168,22 +183,22 @@ function generateQuoteHTMLFullWidth() {
           <td style="padding:${tdPadding};text-align:right;border-right:1px solid #e9ecef;font-size:${tdFontSize};font-weight:600;color:#d46a0a;">${new Intl.NumberFormat('vi-VN').format(discountPerUnit)}đ</td>
           <td style="padding:${tdPadding};text-align:right;font-size:${tdFontSize};color:#1D75AE;font-weight:700;">${new Intl.NumberFormat('vi-VN').format(lineTotal)}đ</td>
         </tr>`;
-        currIndex++;
-      }
-    });
+      currIndex++;
+    }
+  });
 
-    // Derived totals
-    const afterDisc = subtotal - discountAmt;
-    const vatAmt    = afterDisc * (vat / 100);
-    const total     = afterDisc + vatAmt;
-    const totalVal  = Number(total) || 0;
-    const deposit   = computeDepositFromTotal(totalVal);
-    const remaining = Math.max(0, Math.round(totalVal - deposit));
+  // Derived totals
+  const afterDisc = subtotal - discountAmt;
+  const vatAmt = afterDisc * (vat / 100);
+  const total = afterDisc + vatAmt;
+  const totalVal = Number(total) || 0;
+  const deposit = computeDepositFromTotal(totalVal);
+  const remaining = Math.max(0, Math.round(totalVal - deposit));
 
-    // ── Deposit row ──
-    if (_isDepositedExport) {
-        const rowBg = currIndex % 2 === 0 ? '#ffffff' : '#f8f9fa';
-        itemsHTML += `
+  // ── Deposit row ──
+  if (_isDepositedExport) {
+    const rowBg = currIndex % 2 === 0 ? '#ffffff' : '#f8f9fa';
+    itemsHTML += `
         <tr style="background:${rowBg};">
           <td style="padding:${tdPadding};text-align:center;border-right:1px solid #e9ecef;font-size:${tdFontSize};font-weight:500;color:#495057;">${currIndex + 1}</td>
           <td style="padding:${tdPadding};border-right:1px solid #e9ecef;font-size:${tdFontSize};color:#c0392b;font-weight:700;font-style:italic;">Tiền cọc hàng</td>
@@ -193,14 +208,14 @@ function generateQuoteHTMLFullWidth() {
           <td style="padding:${tdPadding};text-align:right;border-right:1px solid #e9ecef;font-size:${tdFontSize};color:#adb5bd;">—</td>
           <td style="padding:${tdPadding};text-align:right;font-size:${tdFontSize};color:#c0392b;font-weight:700;">-${new Intl.NumberFormat('vi-VN').format(_exportDepositAmt)}đ</td>
         </tr>`;
-        currIndex++;
-    }
+    currIndex++;
+  }
 
-    // Padding rows (always pad to at least 15 rows for consistent A4 fill)
-    const minRows = 15;
-    for (let i = currIndex; i < minRows; i++) {
-        const rowBg = i % 2 === 0 ? '#ffffff' : '#f8f9fa';
-        itemsHTML += `
+  // Padding rows (always pad to at least 15 rows for consistent A4 fill)
+  const minRows = 15;
+  for (let i = currIndex; i < minRows; i++) {
+    const rowBg = i % 2 === 0 ? '#ffffff' : '#f8f9fa';
+    itemsHTML += `
         <tr style="background:${rowBg};">
           <td style="padding:${tdPadding};text-align:center;border-right:1px solid #e9ecef;font-size:10px;color:#adb5bd;">${i + 1}</td>
           <td style="padding:${tdPadding};border-right:1px solid #e9ecef;height:22px;"></td>
@@ -210,42 +225,76 @@ function generateQuoteHTMLFullWidth() {
           <td style="padding:${tdPadding};border-right:1px solid #e9ecef;"></td>
           <td style="padding:${tdPadding};"></td>
         </tr>`;
-    }
+  }
 
-    // ── Summary & QR values ──
-    const _displayDeposit   = _isDepositedExport ? 0 : deposit;
-    const _displayRemaining = _isDepositedExport
-        ? Math.max(0, Math.round(totalVal - _exportDepositAmt))
-        : remaining;
-    const _qrAmount = _isDepositedExport
-        ? _displayRemaining
-        : (window.depositDisabled ? remaining : deposit);
+  // ── Summary & QR values ──
+  let _displayDeposit = deposit;
+  let _displayRemaining = remaining;
+  let _qrAmount = remaining;
 
-    const qrCustomerInfo  = (customerName && customerName !== 'Chưa nhập')
-        ? customerName + ' thanh toán ' + quoteNumber
-        : 'Thanh toán ' + quoteNumber;
-    const qrSrc = `https://img.vietqr.io/image/TCB-19038289004015-compact2.png?amount=${_qrAmount}&addInfo=${encodeURIComponent(qrCustomerInfo)}`;
+  if (_isCompletedExport) {
+    _displayDeposit = totalVal;
+    _displayRemaining = 0;
+    _qrAmount = 0;
+  } else if (_isDepositedExport) {
+    _displayDeposit = 0;
+    _displayRemaining = Math.max(0, Math.round(totalVal - _exportDepositAmt));
+    _qrAmount = _displayRemaining;
+  } else {
+    _qrAmount = window.depositDisabled ? remaining : deposit;
+  }
 
-    let totalPoints = 0;
+  // ── Mộc vuông xác nhận ĐÃ THU TIỀN (đóng khi đơn đã thu đủ tiền) ──
+  let stampHTML = '';
+  if (_isCompletedExport) {
+    let paidDateStr = getQuoteDisplayDate();
     try {
-      loadSavedQuotes();
-      totalPoints = savedQuotes.reduce(function(s, q) {
-        try {
-            if ((q.customerPhone || '').trim() === (customerPhone || '').trim()) {
-                let earned = 0;
-                if ((q.orderStatus || '') === 'completed') {
-                    earned = Math.floor((Number(q.total) || 0) / 200000);
-                }
-                const used = Number(q.pointsUsed) || 0;
-                return s + (earned - used);
-            }
-        } catch (e) {}
-        return s;
-      }, 0);
-      if (totalPoints < 0) totalPoints = 0;
-    } catch (e) { totalPoints = 0; }
+      const curQ = (window.savedQuotes || []).find(q => q.id === quoteNumber || (window.editingQuoteId && q.id === window.editingQuoteId));
+      if (curQ && curQ.completedAt) {
+        const d = new Date(curQ.completedAt);
+        paidDateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+      } else if (curQ && (curQ.createdAt || curQ.savedAt)) {
+        const d = new Date(curQ.createdAt || curQ.savedAt);
+        paidDateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+      }
+    } catch (e) { }
 
-    return `
+    stampHTML = `
+        <div style="position:absolute;left:48%;top:56%;transform:translate(-50%, -50%) rotate(-12deg);pointer-events:none;z-index:20;user-select:none;">
+          <div style="border:3.5px double #dc2626;border-radius:6px;padding:8px 24px;background:transparent;text-align:center;min-width:235px;display:inline-block;box-sizing:border-box;">
+            <div style="font-size:12px;font-weight:700;color:#dc2626;letter-spacing:2.5px;text-transform:uppercase;line-height:1.2;">THANH PHÁT</div>
+            <div style="font-size:23px;font-weight:900;color:#dc2626;letter-spacing:3px;text-transform:uppercase;line-height:1.25;margin:4px 0;border-top:2px dashed rgba(220,38,38,0.7);border-bottom:2px dashed rgba(220,38,38,0.7);padding:4px 0;">★ ĐÃ THU ĐỦ ★</div>
+            <div style="font-size:10.5px;font-weight:700;color:#dc2626;letter-spacing:1.5px;text-transform:uppercase;line-height:1.2;">XÁC NHẬN THANH TOÁN</div>
+            <div style="font-size:9.5px;color:#dc2626;margin-top:3px;font-weight:600;">Ngày: ${paidDateStr}</div>
+          </div>
+        </div>`;
+  }
+
+  const qrCustomerInfo = (customerName && customerName !== 'Chưa nhập')
+    ? customerName + ' thanh toán ' + quoteNumber
+    : 'Thanh toán ' + quoteNumber;
+  const qrSrc = `https://img.vietqr.io/image/TCB-19038289004015-compact2.png?amount=${_qrAmount}&addInfo=${encodeURIComponent(qrCustomerInfo)}`;
+
+  let totalPoints = 0;
+  try {
+    loadSavedQuotes();
+    totalPoints = savedQuotes.reduce(function (s, q) {
+      try {
+        if ((q.customerPhone || '').trim() === (customerPhone || '').trim()) {
+          let earned = 0;
+          if ((q.orderStatus || '') === 'completed') {
+            earned = Math.floor((Number(q.total) || 0) / 200000);
+          }
+          const used = Number(q.pointsUsed) || 0;
+          return s + (earned - used);
+        }
+      } catch (e) { }
+      return s;
+    }, 0);
+    if (totalPoints < 0) totalPoints = 0;
+  } catch (e) { totalPoints = 0; }
+
+  return `
     <div style="font-family:'Be Vietnam Pro','Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#2c3e50;width:100%;height:100%;padding:0;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;">
       <div style="width:100%;height:100%;padding:12px;box-sizing:border-box;background:#ffffff;border-radius:6px;display:flex;flex-direction:column;justify-content:space-between;flex:1;">
 
@@ -282,7 +331,7 @@ function generateQuoteHTMLFullWidth() {
         </div>
 
         <!-- Items table -->
-        <div style="margin-bottom:${sectionMargin};">
+        <div style="margin-bottom:${sectionMargin};position:relative;">
           <table style="width:100%;border-collapse:separate;border-spacing:0;font-size:${tdFontSize};border-radius:8px;overflow:hidden;">
             <thead>
               <tr style="background:#1D75AE;color:white;">
@@ -297,6 +346,7 @@ function generateQuoteHTMLFullWidth() {
             </thead>
             <tbody>${itemsHTML}</tbody>
           </table>
+          ${stampHTML}
         </div>
 
         <!-- Payment + Totals -->
@@ -321,8 +371,8 @@ function generateQuoteHTMLFullWidth() {
             <div style="width:100%;display:flex;justify-content:space-between;font-size:${totalsFontSize};"><span>Chiết khấu:</span><span>-${formatCurrency(discountAmt)}</span></div>
             <div style="width:100%;display:flex;justify-content:space-between;font-size:${totalsFontSize};"><span>VAT (${vat}%):</span><span>${formatCurrency(vatAmt)}</span></div>
             <div style="width:100%;border-top:1px solid rgba(255,255,255,0.25);padding-top:6px;display:flex;justify-content:space-between;font-size:${totalsTitleFontSize};font-weight:800;"><span>TỔNG:</span><span>${formatCurrency(total)}</span></div>
-            <div style="width:100%;display:flex;justify-content:space-between;font-size:${totalsFontSize};"><span>${_isDepositedExport ? 'Tiền cọc' : (window.depositDisabled ? 'Cọc' : 'Cọc (40%)')}:</span><span>${_isDepositedExport ? '0đ' : formatCurrency(_displayDeposit)}</span></div>
-            <div style="width:100%;display:flex;justify-content:space-between;font-size:${totalsFontSize};"><span>${_isDepositedExport ? 'Còn lại' : (window.depositDisabled ? 'Còn lại' : 'Còn lại (60%)')}:</span><span>${formatCurrency(_displayRemaining)}</span></div>
+            <div style="width:100%;display:flex;justify-content:space-between;font-size:${totalsFontSize};"><span>${_isCompletedExport ? 'Đã thanh toán' : (_isDepositedExport ? 'Tiền cọc' : (window.depositDisabled ? 'Cọc' : ((totalVal > 0 && _displayDeposit > 0) ? `Cọc (${Math.round((_displayDeposit / totalVal) * 100)}%)` : 'Tiền cọc')))}:</span><span>${formatCurrency(_displayDeposit)}</span></div>
+            <div style="width:100%;display:flex;justify-content:space-between;font-size:${totalsFontSize};"><span>Còn lại:</span><span>${formatCurrency(_displayRemaining)}</span></div>
           </div>
         </div>
 

@@ -27,8 +27,43 @@ function _waitImages(el, timeout = 3000) {
     })));
 }
 
-/** Download a canvas as JPEG */
+/** Download or Share a canvas as JPEG (Tối ưu cho iPhone lưu thẳng vào Thư viện Ảnh Photos) */
 function _downloadCanvasAsJpeg(canvas, filename, quality = 0.95) {
+    // 1. Ưu tiên Web Share API trên thiết bị di động (đặc biệt iPhone iOS Safari)
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile && navigator.canShare && window.File && canvas.toBlob) {
+        canvas.toBlob(async (blob) => {
+            if (!blob) {
+                _fallbackDownload(canvas, filename, quality);
+                return;
+            }
+            try {
+                const file = new File([blob], filename, { type: 'image/jpeg' });
+                if (navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: filename,
+                    });
+                    showNotification('Đã mở menu chia sẻ / lưu ảnh!');
+                    return;
+                }
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.log('Share API error, fallback to normal download:', err);
+                } else {
+                    return; // Người dùng chủ động đóng menu chia sẻ
+                }
+            }
+            _fallbackDownload(canvas, filename, quality);
+        }, 'image/jpeg', quality);
+        return;
+    }
+
+    // 2. Tải về truyền thống trên Desktop
+    _fallbackDownload(canvas, filename, quality);
+}
+
+function _fallbackDownload(canvas, filename, quality = 0.95) {
     const link = document.createElement('a');
     link.download = filename;
     link.href = canvas.toDataURL('image/jpeg', quality);

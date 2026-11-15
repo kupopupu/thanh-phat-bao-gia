@@ -1,0 +1,1215 @@
+/* ==========================================================================
+   MOBILE.CSS  –  Chuyên biệt cho thiết bị di động (Màn hình điện thoại <= 768px)
+   Chuẩn hóa giao diện App Native mượt mà, tối ưu thao tác cảm ứng một tay
+   ========================================================================== */
+
+/* Mặc định trên Desktop / Tablet: ẩn các phần tử chỉ dành riêng cho Mobile */
+.mobile-menu-btn,
+.mobile-drawer-backdrop,
+.mobile-fab-btn,
+.mobile-quote-cards {
+    display: none;
+}
+
+.desktop-quote-table {
+    display: block;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CHẾ ĐỘ DI ĐỘNG (Screen width <= 768px)
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+    /* ── 1. Cấu hình Trang & Reset Khung Nhìn ────────────────────────────── */
+    html,
+    body {
+        height: auto !important;
+        min-height: 100vh;
+        overflow-x: hidden;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        padding: 6px 8px 80px 8px !important;
+        /* Chừa lề dưới cho thao tác vuốt */
+    }
+
+    /* Ngăn phóng to ngoài ý muốn trên iOS khi chạm vào ô nhập liệu */
+    input[type="text"],
+    input[type="number"],
+    input[type="tel"],
+    select,
+    textarea {
+        font-size: 16px !important;
+        touch-action: manipulation;
+    }
+
+    /* ── 2. Header Di Động Tinh Gọn (Compact App Bar) ───────────────────── */
+    .header {
+        margin-bottom: 8px !important;
+        border-radius: var(--radius-md) !important;
+    }
+
+    .header .header-inner {
+        padding: 8px 12px !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        min-height: 50px;
+    }
+
+    .header .logo-section {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .header .logo-section img {
+        height: 24px !important;
+        width: auto;
+    }
+
+    /* Ẩn bớt khối địa chỉ & hotline dài dòng trên header để tiết kiệm 30% diện tích */
+    .header .company-info {
+        display: none !important;
+    }
+
+    .header-right {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+
+    /* Nút đổi giao diện thu gọn icon */
+    .theme-toggle-btn {
+        padding: 5px 10px !important;
+        font-size: 11.5px !important;
+    }
+
+    .theme-toggle-btn .theme-label {
+        display: none !important;
+        /* Chỉ hiện icon sáng/tối */
+    }
+
+    /* Nút Hamburger Menu mở Drawer */
+    .mobile-menu-btn {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+        cursor: pointer;
+        padding: 0;
+        transition: all 0.15s ease;
+    }
+
+    .mobile-menu-btn:active {
+        background: rgba(255, 255, 255, 0.25);
+        transform: scale(0.95);
+    }
+
+    /* ── 3. Chuyển Sidebar Thành Drawer Trượt (Off-Canvas Menu) ───────────── */
+    .page-row {
+        display: block !important;
+        grid-template-columns: 1fr !important;
+        width: 100% !important;
+    }
+
+    /* Sidebar trở thành panel trượt từ cạnh trái */
+    #menuInline {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        width: 285px !important;
+        max-width: 85vw !important;
+        height: 100vh !important;
+        z-index: 9999 !important;
+        transform: translateX(-105%) !important;
+        transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        box-shadow: 12px 0 40px rgba(0, 0, 0, 0.6) !important;
+        margin: 0 !important;
+    }
+
+    /* Khi mở Menu */
+    #menuInline.mobile-open {
+        transform: translateX(0) !important;
+    }
+
+    /* Màn mờ làm tối nền khi mở menu */
+    .mobile-drawer-backdrop {
+        position: fixed !important;
+        inset: 0 !important;
+        background: rgba(4, 11, 22, 0.65) !important;
+        backdrop-filter: blur(5px) !important;
+        -webkit-backdrop-filter: blur(5px) !important;
+        z-index: 9998 !important;
+        display: none;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+    }
+
+    .mobile-drawer-backdrop.active {
+        display: block !important;
+        opacity: 1 !important;
+    }
+
+    .sidebar-compact-inner {
+        height: 100% !important;
+        border-radius: 0 16px 16px 0 !important;
+        padding: 16px 12px 20px !important;
+    }
+
+    .sb-item {
+        padding: 10px 12px !important;
+        font-size: 13.5px !important;
+    }
+
+    /* ── 4. Main Workspace & Khối Thống Kê KPI (Cân đối & Tinh gọn) ────────── */
+    .container,
+    .main-content {
+        height: auto !important;
+        overflow: visible !important;
+        padding: 10px 12px !important;
+        border-radius: var(--radius-md) !important;
+    }
+
+    .dashboard-topbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 6px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .dashboard-topbar .page-title-group {
+        justify-content: space-between;
+    }
+
+    /* Thẻ thống kê KPI xếp lưới cân đối, không bị lệch 1 bên, tiết kiệm diện tích */
+    .stats-bar {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 6px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .stat-card {
+        padding: 6px 9px !important;
+        border-radius: 8px !important;
+        background: rgba(16, 36, 61, 0.7) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .stat-card .stat-label {
+        font-size: 10px !important;
+        margin-bottom: 2px !important;
+        color: #94a3b8 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.2px;
+    }
+
+    .stat-card .stat-value {
+        font-size: 13.5px !important;
+        white-space: normal !important;
+        word-break: break-all !important;
+        line-height: 1.25 !important;
+    }
+
+    .stat-card .stat-sub {
+        display: none !important;
+        /* Ẩn bớt chú thích nhỏ để không choáng chỗ */
+    }
+
+    /* Thẻ Doanh thu chốt (thẻ thứ 5): Trải đều 2 cột cân xứng 100%, không bị lệch 1 bên */
+    #statCardRevenue {
+        grid-column: 1 / -1 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 7px 12px !important;
+        background: linear-gradient(90deg, rgba(16, 36, 61, 0.9) 0%, rgba(29, 117, 174, 0.25) 100%) !important;
+        border: 1px solid rgba(56, 189, 248, 0.3) !important;
+    }
+
+    #statCardRevenue .stat-label {
+        margin-bottom: 0 !important;
+        font-size: 11px !important;
+        color: #38bdf8 !important;
+        font-weight: 600 !important;
+    }
+
+    #statCardRevenue .stat-value {
+        font-size: 14.5px !important;
+        color: #ffffff !important;
+        margin-top: 0 !important;
+    }
+
+    /* ── 5. Thanh Tìm Kiếm & Tabs Bộ Lọc Gọn Gàng Vừa Vặn Màn Hình ───────────── */
+    .table-toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 6px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .main-search-bar {
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    .main-search-bar input {
+        height: 36px !important;
+        padding-left: 34px !important;
+        border-radius: 18px !important;
+        font-size: 13px !important;
+    }
+
+    /* 5 nút lọc xếp vừa vặn 100% trong chiều rộng màn hình, không tràn cắt chữ */
+    .filter-pills {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+        width: 100% !important;
+        padding: 4px !important;
+        border-radius: 10px !important;
+        background: rgba(16, 36, 61, 0.6) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        box-sizing: border-box !important;
+    }
+
+    .filter-pill {
+        flex: 1 1 calc(33.333% - 4px) !important;
+        min-width: 0 !important;
+        padding: 6px 4px !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        text-align: center !important;
+        white-space: nowrap !important;
+        border-radius: 6px !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 2 nút hàng dưới (Còn công nợ & Hoàn thành) chia đều 50% vừa vặn */
+    .filter-pill[data-filter="debt"],
+    .filter-pill[data-filter="completed"] {
+        flex: 1 1 calc(50% - 4px) !important;
+    }
+
+    /* ── 6. Chuyển Bảng Báo Giá Sang Dạng Thẻ Card Di Động (Mobile Quote Cards) ── */
+    .desktop-quote-table {
+        display: none !important;
+    }
+
+    .mobile-quote-cards {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+
+    /* Thẻ Card Báo Giá – Mặc định màu Dark Mode Chuẩn Navy (Viền 4 cạnh đồng nhất, không sọc màu) */
+    .mq-card {
+        background: #0d2137 !important;
+        border: 1px solid #1a385c !important;
+        border-radius: 12px !important;
+        padding: 12px 14px !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 9px !important;
+        position: relative !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Header của Card */
+    .mq-card-head {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 8px !important;
+    }
+
+    .mq-head-left {
+        display: flex !important;
+        align-items: center !important;
+        gap: 7px !important;
+    }
+
+    .mq-card-idx {
+        font-size: 11px !important;
+        color: #64748b !important;
+        font-weight: 600 !important;
+    }
+
+    .mq-card-code {
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        color: #38bdf8 !important;
+        cursor: pointer !important;
+        padding: 2px 7px !important;
+        border-radius: 5px !important;
+        background: rgba(56, 189, 248, 0.12) !important;
+        border: 1px solid rgba(56, 189, 248, 0.25) !important;
+    }
+
+    .mq-card-date {
+        font-size: 11.5px !important;
+        color: #94a3b8 !important;
+    }
+
+    .mq-head-right .badge {
+        font-size: 11px !important;
+        padding: 3px 8px !important;
+    }
+
+    /* Dòng thông tin khách hàng */
+    .mq-card-cust-row {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 8px !important;
+    }
+
+    .mq-card-cust-name {
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        color: #f8fafc !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        flex: 1 !important;
+    }
+
+    .mq-cust-phone {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        color: #38bdf8 !important;
+        background: rgba(56, 189, 248, 0.12) !important;
+        border: 1px solid rgba(56, 189, 248, 0.25) !important;
+        padding: 3px 8px !important;
+        border-radius: 6px !important;
+        text-decoration: none !important;
+        flex-shrink: 0 !important;
+    }
+
+    .mq-cust-phone-none {
+        font-size: 12px !important;
+        color: #475569 !important;
+    }
+
+    /* Bố cục tài chính gọn gàng, không bị ngắt rách chữ */
+    .mq-finance-strip {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        background: rgba(6, 16, 30, 0.55) !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        border-radius: 8px !important;
+        padding: 8px 12px !important;
+        gap: 10px !important;
+    }
+
+    .mq-fin-total-box {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 2px !important;
+    }
+
+    .mq-fin-lbl {
+        font-size: 10px !important;
+        text-transform: uppercase !important;
+        color: #94a3b8 !important;
+        letter-spacing: 0.3px !important;
+        font-weight: 600 !important;
+    }
+
+    .mq-fin-val-total {
+        font-size: 15px !important;
+        font-weight: 800 !important;
+        color: #ffffff !important;
+    }
+
+    .mq-fin-sub-group {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 3px !important;
+        text-align: right !important;
+    }
+
+    .mq-fin-sub-item {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        gap: 4px !important;
+        font-size: 11px !important;
+        white-space: nowrap !important;
+    }
+
+    .mq-fin-sub-lbl {
+        color: #94a3b8 !important;
+        font-size: 10.5px !important;
+    }
+
+    .mq-fin-sub-val {
+        white-space: nowrap !important;
+        font-size: 11.5px !important;
+    }
+
+    .mq-fin-sub-val.val-paid {
+        color: #38bdf8 !important;
+        font-weight: 700 !important;
+    }
+
+    .mq-fin-sub-val.val-debt {
+        color: #94a3b8 !important;
+        font-weight: 600 !important;
+    }
+
+    .mq-fin-sub-val.val-debt.has-debt {
+        color: #fb923c !important;
+        /* Cam nổi bật khi còn nợ */
+        font-weight: 700 !important;
+    }
+
+    /* Hàng nút thao tác di động – Tối giản, đồng bộ theo giao diện */
+    .mq-card-actions {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        margin-top: 2px !important;
+        padding-top: 8px !important;
+        border-top: 1px dashed rgba(255, 255, 255, 0.08) !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+    }
+
+    .mq-card-actions::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    /* Phong cách nút tối giản, màu sắc đồng bộ trang nhã */
+    .mq-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        height: 31px !important;
+        padding: 0 10px !important;
+        border-radius: 6px !important;
+        font-size: 11.5px !important;
+        font-weight: 600 !important;
+        background: #10233b !important;
+        border: 1px solid #1e3a5f !important;
+        color: #bae0fd !important;
+        cursor: pointer !important;
+        flex-shrink: 0 !important;
+        touch-action: manipulation !important;
+        transition: all 0.15s ease !important;
+    }
+
+    .mq-btn:active {
+        background: #193456 !important;
+        border-color: #38bdf8 !important;
+        color: #ffffff !important;
+        transform: scale(0.96) !important;
+    }
+
+    .mq-btn:disabled {
+        background: rgba(16, 35, 59, 0.45) !important;
+        border-color: rgba(30, 58, 95, 0.4) !important;
+        color: #64748b !important;
+        opacity: 0.5 !important;
+        cursor: not-allowed !important;
+    }
+
+    /* Nút chính cần tương tác duyệt đơn / thu đủ tiền */
+    .mq-btn-confirm {
+        background: #0284c7 !important;
+        border-color: #38bdf8 !important;
+        color: #ffffff !important;
+    }
+
+    .mq-btn-fullpaid:not(.is-done) {
+        background: #0e3a66 !important;
+        border-color: #38bdf8 !important;
+        color: #7dd3fc !important;
+    }
+
+    .mq-btn-fullpaid.is-done {
+        background: rgba(16, 35, 59, 0.45) !important;
+        border-color: rgba(30, 58, 95, 0.4) !important;
+        color: #64748b !important;
+        opacity: 0.5 !important;
+    }
+
+    /* Pager di động */
+    .ql-pager {
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 8px !important;
+        margin-top: 12px !important;
+        padding: 8px 10px !important;
+    }
+
+    .ql-pager-left {
+        font-size: 11.5px !important;
+        text-align: center !important;
+    }
+
+    .ql-pager-right {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+    }
+
+    /* ── Chỉ áp dụng khi ở Giao diện Sáng (Light Mode: body:not(.dark-mode)) ── */
+    body:not(.dark-mode) .stat-card {
+        background: #ffffff !important;
+        border-color: #e2e8f0 !important;
+    }
+
+    body:not(.dark-mode) #statCardRevenue {
+        background: linear-gradient(90deg, #f0fdf4 0%, #dcfce7 100%) !important;
+        border-color: #86efac !important;
+    }
+
+    body:not(.dark-mode) #statCardRevenue .stat-label {
+        color: #166534 !important;
+    }
+
+    body:not(.dark-mode) #statCardRevenue .stat-value {
+        color: #14532d !important;
+    }
+
+    body:not(.dark-mode) .filter-pills {
+        background: #f1f5f9 !important;
+        border-color: #cbd5e1 !important;
+    }
+
+    body:not(.dark-mode) .mq-card {
+        background: #ffffff !important;
+        border-color: #e2e8f0 !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06) !important;
+    }
+
+    body:not(.dark-mode) .mq-card-cust-name {
+        color: #0f172a !important;
+    }
+
+    body:not(.dark-mode) .mq-finance-strip {
+        background: #f8fafc !important;
+        border-color: #e2e8f0 !important;
+    }
+
+    body:not(.dark-mode) .mq-fin-val-total {
+        color: #0f172a !important;
+    }
+
+    body:not(.dark-mode) .mq-card-actions {
+        border-top-color: #e2e8f0 !important;
+    }
+
+    body:not(.dark-mode) .mq-btn {
+        background: #f1f5f9 !important;
+        border-color: #cbd5e1 !important;
+        color: #334155 !important;
+    }
+
+    /* ── 7. Nút Nổi Tạo Báo Giá (Floating Action Button - FAB) ───────────── */
+    .mobile-fab-btn {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        position: fixed !important;
+        bottom: 22px !important;
+        right: 18px !important;
+        width: 52px !important;
+        height: 52px !important;
+        border-radius: 50% !important;
+        background: linear-gradient(135deg, #1d75ae 0%, #12497b 100%) !important;
+        color: #ffffff !important;
+        border: 2px solid rgba(255, 255, 255, 0.4) !important;
+        box-shadow: 0 8px 24px rgba(11, 37, 69, 0.5) !important;
+        z-index: 1500 !important;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    .mobile-fab-btn:active {
+        transform: scale(0.9) !important;
+    }
+
+    /* Ẩn nút "+ Tạo báo giá mới" trên header bảng khi đã có FAB nổi */
+    .dashboard-topbar .btn-new-quote {
+        display: none !important;
+    }
+
+    /* ── 8. Tối Ưu Xem Trước Bản In & Toolbars Trên Mobile ────────────────── */
+    .preview-floating-toolbar {
+        top: 10px !important;
+        right: 10px !important;
+        left: 10px !important;
+        justify-content: space-between !important;
+        padding: 4px 8px !important;
+        border-radius: 12px !important;
+    }
+
+    .preview-floating-toolbar .pft-btn-secondary span,
+    .preview-floating-toolbar .pft-btn-primary span {
+        display: none !important;
+        /* Chỉ hiện icon để không tràn toolbar trên màn hình nhỏ */
+    }
+
+    .preview-floating-toolbar .pft-btn-secondary,
+    .preview-floating-toolbar .pft-btn-primary {
+        padding: 0 10px !important;
+        height: 30px !important;
+    }
+
+    /* ── 9. TỐI ƯU TOÀN DIỆN MODAL LẬP BÁO GIÁ TRÊN MOBILE (#quoteFormModal) ──── */
+    #quoteFormModal {
+        padding: 0 !important;
+        background: #061325 !important;
+        z-index: 9999 !important;
+        overflow: hidden !important;
+    }
+
+    .qfm-inner {
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: 100vw !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        border: none !important;
+        display: flex !important;
+        flex-direction: column !important;
+        background: #0a192f !important;
+    }
+
+    /* Header Modal Tinh Gọn, Không Rách Dòng Tiêu Đề */
+    .qfm-header {
+        padding: 8px 12px !important;
+        min-height: 48px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 8px !important;
+        flex-shrink: 0 !important;
+    }
+
+    .qfm-header-left {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        flex: 1 !important;
+        min-width: 0 !important;
+    }
+
+    .qfm-header h3 {
+        font-size: 14.5px !important;
+        font-weight: 700 !important;
+        white-space: nowrap !important;
+        margin: 0 !important;
+        color: #ffffff !important;
+    }
+
+    #currentQuoteDisplay {
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        padding: 2px 7px !important;
+        white-space: nowrap !important;
+        background: rgba(255, 255, 255, 0.16) !important;
+        border: 1px solid rgba(255, 255, 255, 0.28) !important;
+        border-radius: 12px !important;
+        letter-spacing: 0.2px !important;
+    }
+
+    .qfm-header-actions {
+        flex-shrink: 0 !important;
+    }
+
+    .qfm-close {
+        padding: 5px 9px !important;
+        font-size: 11.5px !important;
+        border-radius: 6px !important;
+        gap: 4px !important;
+        background: rgba(255, 255, 255, 0.12) !important;
+        border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    }
+
+    /* Modal Scrollable Body */
+    .qfm-body {
+        padding: 10px 10px 16px 10px !important;
+        gap: 12px !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        flex: 1 !important;
+    }
+
+    /* Khối 1: Thông tin khách hàng */
+    .customer-section {
+        padding: 12px !important;
+        border-radius: 10px !important;
+        background: #0f233d !important;
+        border: 1px solid #1a385c !important;
+    }
+
+    .section-header-bar {
+        margin-bottom: 8px !important;
+        padding-bottom: 6px !important;
+        gap: 8px !important;
+    }
+
+    .section-title {
+        font-size: 11.5px !important;
+        color: #7dd3fc !important;
+    }
+
+    /* Chuyển các trường khách hàng thành 1 cột dọc thông thoáng */
+    .customer-grid-3col {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+
+    .form-field {
+        width: 100% !important;
+    }
+
+    .form-field label {
+        font-size: 11.5px !important;
+        margin-bottom: 3px !important;
+        color: #94a3b8 !important;
+    }
+
+    .form-field input {
+        height: 38px !important;
+        font-size: 14px !important;
+        padding: 0 10px !important;
+        border-radius: 6px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Khối 2: Bố cục chính xếp dọc 1 cột (Chi tiết hàng hóa trên, Tổng kết đơn hàng dưới) */
+    .main-layout {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        width: 100% !important;
+    }
+
+    /* Khối Chi tiết hàng hóa */
+    .items-section {
+        padding: 12px 10px !important;
+        border-radius: 10px !important;
+        background: #0f233d !important;
+        border: 1px solid #1a385c !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* ── Biến Hàng Hóa Trong Form Báo Giá Thành Dạng Card 2 Hàng (Tối ưu 100% Mobile) ── */
+    .items-section>div[style*="overflow-x:auto"] {
+        overflow-x: visible !important;
+        border: none !important;
+        background: transparent !important;
+        margin-bottom: 6px !important;
+    }
+
+    .items-table {
+        width: 100% !important;
+        min-width: 0 !important;
+        border: none !important;
+        display: block !important;
+    }
+
+    .items-table thead {
+        display: none !important;
+        /* Ẩn thead table truyền thống */
+    }
+
+    .items-table tbody {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+
+    /* Từng Hạng Mục (Dòng tr) trở thành một Card 3 Hàng Rộng Rãi */
+    .items-table tr {
+        display: grid !important;
+        grid-template-columns: repeat(12, 1fr) !important;
+        row-gap: 6px !important;
+        column-gap: 6px !important;
+        background: #091a2e !important;
+        border: 1px solid #1a385c !important;
+        border-radius: 8px !important;
+        padding: 9px 10px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        align-items: center !important;
+    }
+
+    .items-table td {
+        display: flex !important;
+        align-items: center !important;
+        border: none !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    /* ── HÀNG 1: STT (#1) + TÊN HÀNG HÓA RỘNG RÃI TRỌN VẸN ────── */
+    .items-table td:nth-child(1) {
+        grid-column: 1 / span 1 !important;
+        grid-row: 1 !important;
+        justify-content: center !important;
+        font-size: 12px !important;
+        font-weight: 700 !important;
+        color: #7dd3fc !important;
+    }
+
+    .items-table td.product-name-cell {
+        grid-column: 2 / span 11 !important;
+        grid-row: 1 !important;
+    }
+
+    .items-table td.product-name-cell input {
+        height: 36px !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        padding: 0 10px !important;
+        border-radius: 6px !important;
+        background: rgba(0, 0, 0, 0.25) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        color: #ffffff !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* ── HÀNG 2: 4 THÔNG SỐ NHẬP LIỆU (ĐVT + SỐ LƯỢNG + ĐƠN GIÁ + CHIẾT KHẤU) ── */
+    /* 1. ĐVT (3/12 cột) */
+    .items-table td.unit-cell {
+        grid-column: 1 / span 3 !important;
+        grid-row: 2 !important;
+    }
+
+    .items-table td.unit-cell input {
+        height: 32px !important;
+        font-size: 12px !important;
+        padding: 0 6px !important;
+        text-align: center !important;
+        border-radius: 5px !important;
+        background: rgba(0, 0, 0, 0.2) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #bae0fd !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 2. Số lượng (2/12 cột) */
+    .items-table td:nth-child(4) {
+        grid-column: 4 / span 2 !important;
+        grid-row: 2 !important;
+    }
+
+    .items-table td:nth-child(4) input {
+        height: 32px !important;
+        font-size: 12.5px !important;
+        font-weight: 600 !important;
+        padding: 0 4px !important;
+        text-align: center !important;
+        border-radius: 5px !important;
+        background: rgba(0, 0, 0, 0.2) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #ffffff !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 3. Đơn giá (4/12 cột rộng rãi) */
+    .items-table td.price-cell {
+        grid-column: 6 / span 4 !important;
+        grid-row: 2 !important;
+    }
+
+    .items-table td.price-cell input {
+        height: 32px !important;
+        font-size: 12.5px !important;
+        font-weight: 600 !important;
+        padding: 0 6px !important;
+        text-align: right !important;
+        border-radius: 5px !important;
+        background: rgba(0, 0, 0, 0.2) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #ffffff !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 4. Chiết khấu (3/12 cột) */
+    .items-table td.discount-cell {
+        grid-column: 10 / span 3 !important;
+        grid-row: 2 !important;
+    }
+
+    .items-table td.discount-cell input {
+        height: 32px !important;
+        font-size: 12px !important;
+        padding: 0 6px !important;
+        text-align: right !important;
+        border-radius: 5px !important;
+        background: rgba(0, 0, 0, 0.2) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #cbd5e1 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* ── HÀNG 3: TỔNG TIỀN DÒNG + LƯU SP + DẤU XÓA (✕) ─────── */
+    /* Thành tiền nằm ở bên trái / giữa hàng 3 */
+    .items-table td.row-total {
+        grid-column: 1 / span 9 !important;
+        grid-row: 3 !important;
+        justify-content: flex-start !important;
+        font-size: 13.5px !important;
+        font-weight: 800 !important;
+        color: #38bdf8 !important;
+        white-space: nowrap !important;
+        padding-top: 2px !important;
+    }
+
+    .items-table td.row-total::before {
+        content: "Thành tiền: " !important;
+        font-size: 11px !important;
+        font-weight: 500 !important;
+        color: #94a3b8 !important;
+        margin-right: 5px !important;
+    }
+
+    /* Nút Lưu SP ở góc phải hàng 3 */
+    .items-table td:nth-child(8) {
+        grid-column: 10 / span 1 !important;
+        grid-row: 3 !important;
+        justify-content: flex-end !important;
+    }
+
+    .items-table td:nth-child(8) .btn-save-item {
+        width: 28px !important;
+        height: 28px !important;
+        padding: 0 !important;
+        border-radius: 6px !important;
+        justify-content: center !important;
+    }
+
+    .items-table td:nth-child(8) .btn-save-item span {
+        display: none !important;
+    }
+
+    /* Dấu X (xóa dòng) ở góc ngoài cùng bên phải hàng 3 */
+    .items-table td:nth-child(9) {
+        grid-column: 11 / span 2 !important;
+        grid-row: 3 !important;
+        justify-content: flex-end !important;
+    }
+
+    .items-table td:nth-child(9) .remove-btn {
+        width: 32px !important;
+        height: 28px !important;
+        padding: 0 !important;
+        border-radius: 6px !important;
+        font-size: 13px !important;
+        color: #f87171 !important;
+        background: rgba(239, 68, 68, 0.12) !important;
+        border: 1px solid rgba(239, 68, 68, 0.25) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .add-row-btn {
+        width: 100% !important;
+        height: 38px !important;
+        padding: 8px !important;
+        font-size: 12.5px !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+        justify-content: center !important;
+        margin-top: 4px !important;
+    }
+
+    /* Khối Tổng kết đơn hàng (Sticky bỏ trên mobile, chuyển thành khối hộp rõ ràng) */
+    .summary {
+        position: static !important;
+        width: 100% !important;
+        padding: 12px 14px !important;
+        border-radius: 10px !important;
+        background: #0f233d !important;
+        border: 1px solid #1a385c !important;
+        box-sizing: border-box !important;
+    }
+
+    .summary h3 {
+        font-size: 11.5px !important;
+        color: #7dd3fc !important;
+        margin-bottom: 6px !important;
+        padding-bottom: 6px !important;
+    }
+
+    .summary-row {
+        padding: 6px 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 8px !important;
+    }
+
+    .summary-row span:first-child {
+        font-size: 12px !important;
+        color: #94a3b8 !important;
+    }
+
+    .summary-row span:last-child {
+        font-size: 13px !important;
+        font-weight: 700 !important;
+        color: #ffffff !important;
+        white-space: nowrap !important;
+        /* Chống rách chữ 0 VNĐ */
+    }
+
+    /* Khối Tổng thanh toán nổi bật */
+    .summary-total-box {
+        padding: 10px 14px !important;
+        border-radius: 8px !important;
+        margin: 8px 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        background: linear-gradient(100deg, #0d2440 0%, #164878 100%) !important;
+        border: 1px solid #254b78 !important;
+    }
+
+    .summary-total-box span:first-child {
+        font-size: 12px !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.3px !important;
+    }
+
+    .summary-total-box span:last-child {
+        font-size: 16px !important;
+        font-weight: 800 !important;
+        color: #38bdf8 !important;
+        white-space: nowrap !important;
+    }
+
+    /* Tiền cọc & Input % */
+    #depositSummaryRow {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 6px !important;
+    }
+
+    #depositAmountInput {
+        width: 105px !important;
+        font-size: 12px !important;
+        height: 30px !important;
+    }
+
+    /* Sticky Action Footer Trên Mobile */
+    .qfm-action-buttons {
+        padding: 8px 10px !important;
+        background: #071526 !important;
+        border-top: 1px solid #1a385c !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 6px !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Hàng nút phụ phía trên: Xem trước, Xuất JPG */
+    .qfm-action-buttons>.btn-ghost {
+        display: none !important;
+        /* Đã có nút Đóng trên header */
+    }
+
+    .qfm-action-right {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 6px !important;
+        width: 100% !important;
+        margin: 0 !important;
+    }
+
+    .qfm-action-right .btn-secondary {
+        height: 35px !important;
+        padding: 0 8px !important;
+        font-size: 11.5px !important;
+        font-weight: 600 !important;
+        border-radius: 6px !important;
+        justify-content: center !important;
+    }
+
+    /* Nút Xác nhận hoàn tất to rõ ở hàng dưới full width */
+    #finalizeQuoteBtn {
+        grid-column: 1 / -1 !important;
+        width: 100% !important;
+        height: 42px !important;
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        border-radius: 8px !important;
+        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+        border: 1px solid #38bdf8 !important;
+        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35) !important;
+        justify-content: center !important;
+    }
+
+    /* Light Mode Cho Form Báo Giá */
+    body:not(.dark-mode) #quoteFormModal {
+        background: #f1f5f9 !important;
+    }
+
+    body:not(.dark-mode) .qfm-inner {
+        background: #f8fafc !important;
+    }
+
+    body:not(.dark-mode) .customer-section,
+    body:not(.dark-mode) .items-section,
+    body:not(.dark-mode) .summary {
+        background: #ffffff !important;
+        border-color: #e2e8f0 !important;
+    }
+
+    body:not(.dark-mode) .items-table tr {
+        background: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+    }
+    body:not(.dark-mode) .items-table td.product-name-cell input,
+    body:not(.dark-mode) .items-table td input {
+        background: #ffffff !important;
+        border-color: #cbd5e1 !important;
+        color: #0f172a !important;
+    }
+    body:not(.dark-mode) .items-table td.row-total {
+        color: #0284c7 !important;
+    }
+    body:not(.dark-mode) .summary-row span:last-child {
+        color: #0f172a !important;
+    }
+
+    body:not(.dark-mode) .qfm-action-buttons {
+        background: #ffffff !important;
+        border-top-color: #e2e8f0 !important;
+    }
+}

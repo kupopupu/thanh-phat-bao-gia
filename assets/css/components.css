@@ -1,218 +1,675 @@
-/* =====================================================
-   COMPONENTS.CSS  –  Buttons, Inputs, Dropdowns, Toggle
-   ===================================================== */
+/* ==========================================================================
+   COMPONENTS.CSS  –  Buttons, Toolbars, KPI Cards, Pastel Badges, Pagination
+   ========================================================================== */
 
-/* ---- Generic inputs & selects ---- */
+/* ── Generic Form Controls ───────────────────────────────────────────────── */
 input[type="text"],
 input[type="tel"],
 input[type="number"],
 select {
-    border: 1px solid #c8d8e8 !important;
-    border-radius: 10px !important;
-    background: #fff !important;
-    color: var(--ink);
-    padding: 9px 11px !important;
-    font-size: 13px !important;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    width: 100%;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-md) !important;
+    background: var(--bg-surface) !important;
+    color: var(--text-main);
+    padding: 6px 11px !important;
+    font-size: 12.5px !important;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
 input:focus,
 select:focus {
     outline: none;
-    border-color: #5ea5d8 !important;
-    box-shadow: 0 0 0 3px rgba(46, 135, 196, 0.15);
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px rgba(29, 117, 174, 0.14) !important;
 }
 
-/* ---- Buttons ---- */
+input::placeholder {
+    color: var(--text-sub);
+}
+
+/* ── Button Hierarchy (Xanh Thương Hiệu – Xanh Pastel – Trắng) ───────────── */
 .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     border: 1px solid transparent;
-    border-radius: 999px;
-    padding: 10px 16px;
-    font-size: 13px;
+    border-radius: var(--radius-md);
+    padding: 7px 14px;
+    font-size: 12.5px;
     font-weight: 600;
     cursor: pointer;
-    transition: 0.2s ease;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    line-height: 1.3;
 }
 
-.btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 18px rgba(16, 42, 67, 0.18);
+.btn:active {
+    transform: translateY(1px);
 }
 
-.btn-primary {
-    color: #fff;
-    background: linear-gradient(120deg, var(--primary), #2d90cf);
-}
-
+/* Nút Chính: Xanh Thương Hiệu Thanh Phát chữ Trắng */
+.btn-primary,
 .btn-success {
-    color: #fff;
-    background: linear-gradient(120deg, #1a8f5f, #2bad79);
+    color: var(--white);
+    background: var(--brand-blue);
+    border-color: var(--brand-blue);
+    box-shadow: 0 2px 5px rgba(22, 96, 146, 0.18);
 }
 
-#finalizeQuoteBtn {
-    background: linear-gradient(120deg, #1a8f5f, #2bad79) !important;
-    color: #fff !important;
-    border: none !important;
+.btn-primary:hover,
+.btn-success:hover {
+    background: var(--navy-900);
+    border-color: var(--navy-900);
 }
 
-#quoteListBtn {
-    background: #f1f8ff !important;
-    color: #145c91 !important;
-    border: 1px solid #bfd8ee !important;
+/* Nút Phụ: Xanh Da Trời Pastel chữ Xanh Đen */
+.btn-secondary {
+    color: var(--navy-900);
+    background: var(--pastel-50);
+    border-color: var(--border);
 }
 
-#finalizeQuoteBtn,
-#quoteListBtn {
-    margin-left: 8px;
+.btn-secondary:hover {
+    background: var(--pastel-100);
+    border-color: var(--pastel-200);
 }
 
-/* ---- Action buttons bar ---- */
-.action-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: flex-start;
+/* Nút Ghost: Trắng viền mảnh */
+.btn-ghost {
+    color: var(--text-secondary);
+    background: var(--bg-surface);
+    border-color: var(--border);
 }
 
-/* ---- Quote type toggle buttons ---- */
-.quote-type-btn {
-    border-radius: 999px !important;
-    border: 1px solid #a6cae5 !important;
-    padding: 7px 13px !important;
-    font-size: 12px !important;
+.btn-ghost:hover {
+    background: var(--pastel-50);
+    color: var(--navy-900);
 }
 
-.quote-type-btn.active {
-    background: linear-gradient(120deg, var(--primary), #2d90cf) !important;
-    color: #fff !important;
-    border-color: transparent !important;
-}
-
-/* ---- Dropdown ---- */
-.dropdown-container {
-    position: relative;
-}
-
-.dropdown-btn {
+/* Nút CTA Tạo Báo Giá Mới (Chuẩn Xanh Thanh Phát) */
+.btn-new-quote {
     display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: linear-gradient(135deg, #166092 0%, #1d75ae 100%);
+    color: var(--white);
+    border: 1px solid #145582;
+    border-radius: var(--radius-md);
+    padding: 7px 16px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(29, 117, 174, 0.22);
+    transition: all 0.15s ease;
+}
+
+.btn-new-quote:hover {
+    background: var(--navy-900);
+    border-color: var(--navy-900);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(11, 37, 69, 0.22);
+}
+
+/* ── Page Header Bar (Gọn gàng, Tiết kiệm chiều cao dọc) ─────────────────── */
+.dashboard-topbar,
+.pl-topbar,
+.cp-topbar,
+.report-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-light);
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.page-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dashboard-topbar h2,
+.pl-title,
+.cp-title,
+.report-title {
+    margin: 0;
+    font-size: 16.5px;
+    font-weight: 800;
+    color: var(--navy-900);
+    letter-spacing: -0.2px;
+}
+
+.count-pill,
+.pl-count,
+.cp-count {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 9px;
+    border-radius: var(--radius-full);
+    background: var(--pastel-100);
+    border: 1px solid var(--pastel-200);
+    color: var(--brand-blue);
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* ── Revenue Analytics Hub Sub-navigation Tabs ────────────────────────── */
+.rev-hub-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--pastel-50);
+    border: 1px solid var(--border);
+    padding: 3px;
+    border-radius: var(--radius-md);
+}
+
+.rev-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 13px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.rev-tab-btn:hover {
+    color: var(--navy-900);
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.rev-tab-btn.active {
+    background: var(--bg-surface);
+    color: var(--brand-blue);
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(11, 37, 69, 0.08);
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .rev-hub-nav {
+    background: rgba(15, 23, 42, 0.6);
+    border-color: rgba(56, 189, 248, 0.18);
+}
+
+[data-theme="dark"] .rev-tab-btn {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .rev-tab-btn:hover {
+    color: #e0f2fe;
+    background: rgba(30, 41, 59, 0.7);
+}
+
+[data-theme="dark"] .rev-tab-btn.active {
+    background: #1e293b;
+    color: #38bdf8;
+    border-color: rgba(56, 189, 248, 0.35);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.cp-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--pastel-50);
+    color: var(--navy-900);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.cp-back-btn:hover {
+    background: var(--pastel-100);
+    border-color: var(--pastel-200);
+}
+
+/* ── KPI / Metric Strip (5 Thẻ Thống Kê Gọn Sắc Nét) ─────────────────────── */
+.stats-bar {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+
+.stat-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 9px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.15s ease;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--pastel-200);
+    transition: background 0.15s ease;
+}
+
+.stat-card:hover {
+    border-color: var(--pastel-200);
+    background: var(--pastel-50);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.stat-card:hover::before {
+    background: var(--accent);
+}
+
+.stat-card.active-filter {
+    background: var(--pastel-50);
+    border-color: var(--accent);
+    box-shadow: 0 2px 8px rgba(29, 117, 174, 0.1);
+}
+
+.stat-card.active-filter::before {
+    background: var(--accent);
+    width: 4px;
+}
+
+.stat-card .stat-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.stat-card .stat-value {
+    font-size: 16.5px;
+    font-weight: 800;
+    color: var(--navy-900);
+    letter-spacing: -0.3px;
+    margin: 1px 0;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.stat-card .stat-sub {
+    font-size: 10.5px;
+    color: var(--text-sub);
+    font-weight: 500;
+}
+
+/* ── Unified Table Toolbar (Search + Segmented Filter Pills) ─────────────── */
+.table-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+}
+
+.main-search-bar {
+    position: relative;
+    flex: 1;
+    max-width: 360px;
+    min-width: 220px;
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+
+.main-search-bar .search-icon-slot {
+    position: absolute;
+    left: 11px;
+    color: var(--text-sub);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+}
+
+.main-search-bar input {
+    width: 100%;
+    padding: 6px 12px 6px 34px !important;
+    border-radius: var(--radius-md) !important;
+    border: 1px solid var(--border) !important;
+    font-size: 12.5px !important;
+    background: var(--bg-surface) !important;
+}
+
+.filter-pills {
+    display: inline-flex;
+    align-items: center;
+    background: var(--pastel-50);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 2.5px;
+    gap: 2px;
+}
+
+.filter-pill {
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 4.5px 11px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.filter-pill:hover {
+    color: var(--navy-900);
+    background: var(--pastel-100);
+}
+
+.filter-pill.active {
+    background: var(--brand-blue);
+    color: var(--white);
+    box-shadow: 0 1px 2px rgba(22, 96, 146, 0.18);
+}
+
+/* ── Status Badges (Hệ Màu Nhận Biết Tinh Tế: Chấm & Viền Nét, Nền Pastel Siêu Nhạt) ──── */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5.5px;
+    padding: 3px 9px;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    line-height: 1.25;
+    background: var(--bg-surface);
+}
+
+.badge-dot {
+    width: 6.5px;
+    height: 6.5px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.9);
+}
+
+/* 1. Chưa xác nhận: Xám Slate Tinh Tế */
+.badge-pending {
+    background: #f8fafc;
+    color: #475569;
+    border-color: #cbd5e1;
+}
+.badge-pending .badge-dot {
+    background: #94a3b8;
+}
+
+/* 2. Không cọc: Cam Hổ Phách Nhẹ Nhận Diện Rõ */
+.badge-no-deposit {
+    background: #fffdf5;
+    color: #b45309;
+    border-color: #fcd34d;
+}
+.badge-no-deposit .badge-dot {
+    background: #f59e0b;
+}
+
+/* 3. Đã đặt cọc: Xanh Dương Nhận Diện Cọc */
+.badge-deposited {
+    background: #f0f9ff;
+    color: #0369a1;
+    border-color: #7dd3fc;
+}
+.badge-deposited .badge-dot {
+    background: #0284c7;
+}
+
+/* 4. Hoàn thành: Xanh Ngọc Lục Bảo (Emerald) Nhận Diện Xong Đơn */
+.badge-completed {
+    background: #f0fdf4;
+    color: #166534;
+    border-color: #86efac;
+}
+.badge-completed .badge-dot {
+    background: #10b981;
+}
+
+/* ── Cụm Nút Thao Tác Trong Bảng (Action Buttons Tinh Gọn Trực Tiếp) ────── */
+.qlt-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 3px;
+}
+
+.qlt-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 25px;
+    height: 25px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.12s ease;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.qlt-btn:hover:not(:disabled) {
+    border-color: var(--pastel-200);
+    color: var(--navy-900);
+    background: var(--pastel-100);
+}
+
+.qlt-btn:disabled {
+    opacity: 0.28;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Nút nghiệp vụ chính đầu dòng (Duyệt / Thu đủ) */
+.qlt-btn-confirm,
+.qlt-btn-fullpaid {
+    width: 56px;
+    height: 25px;
+    padding: 0 5px;
+    gap: 2.5px;
+    font-size: 10.5px;
+    font-weight: 700;
+    background: var(--pastel-100);
+    color: var(--brand-blue);
+    border-color: var(--pastel-200);
+}
+
+.qlt-btn-confirm:hover:not(:disabled),
+.qlt-btn-fullpaid:hover:not(:disabled) {
+    background: var(--brand-blue);
+    color: var(--white);
+    border-color: var(--brand-blue);
+}
+
+/* Nút Xóa khi hover */
+.qlt-btn-del:hover:not(:disabled),
+.qlt-btn--del:hover:not(:disabled) {
+    background: var(--danger-light);
+    color: var(--danger);
+    border-color: var(--danger-border);
+}
+
+/* ── Thanh Phân Trang Đáy Bảng (Pagination Footer) ──────────────────────── */
+.ql-pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 8px;
+    padding: 6px 12px;
+    background: var(--pastel-50);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.ql-pager-left {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.ql-pager-right {
+    display: flex;
     align-items: center;
     gap: 6px;
 }
 
-.dropdown-menu {
-    position: absolute;
-    left: 0;
-    bottom: calc(100% + 8px);
-    min-width: 250px;
-    border: 1px solid #c9dced;
-    border-radius: 12px;
-    background: #fff;
-    box-shadow: var(--shadow-md);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(8px);
-    transition: 0.18s ease;
-    overflow: hidden;
-    z-index: 1005;
+.ql-pg-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 25px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface);
+    color: var(--navy-900);
+    font-size: 11.5px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    padding: 0;
 }
 
-.dropdown-menu.active {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
+.ql-pg-btn:hover:not(:disabled) {
+    background: var(--brand-blue);
+    color: var(--white);
+    border-color: var(--brand-blue);
 }
 
-.dropdown-header {
-    padding: 8px 12px;
+.ql-pg-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.ql-pg-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--navy-900);
+}
+
+.ql-pg-input {
+    width: 40px !important;
+    height: 25px !important;
+    padding: 1px 4px !important;
+    text-align: center;
+    font-weight: 700;
+    font-size: 12px !important;
+}
+
+.ql-pg-input::-webkit-outer-spin-button,
+.ql-pg-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.ql-pg-select {
+    width: auto !important;
+    height: 25px !important;
+    padding: 1px 8px !important;
+    font-size: 11.5px !important;
+    font-weight: 600;
+    color: var(--navy-900);
+}
+
+/* ── Nút Lưu Sản Phẩm Trên Từng Dòng Hàng Hóa ───────────────────────────── */
+.btn-save-item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 2px 8px;
+    height: 25px;
+    border-radius: var(--radius-sm);
     font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    color: #4b6887;
-    background: #f6fafe;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+    user-select: none;
+    box-sizing: border-box;
 }
 
-.dropdown-item {
-    width: 100%;
-    text-align: left;
-    padding: 10px 12px;
-    border: none;
-    background: #fff;
-    font-size: 13px;
-    color: #254d72;
+/* Trạng thái 1: Sản phẩm mới chưa có trong danh mục -> Nút sáng để lưu */
+.btn-save-item.can-save {
+    background: #e0f2fe;
+    border-color: #7dd3fc;
+    color: var(--brand-blue);
     cursor: pointer;
 }
 
-.dropdown-item:hover {
-    background: #edf6ff;
+.btn-save-item.can-save:hover {
+    background: var(--brand-blue);
+    border-color: var(--brand-blue);
+    color: #ffffff;
+    box-shadow: 0 1px 4px rgba(22, 96, 146, 0.25);
 }
 
-.dropdown-item.special {
-    color: #0f6aaa;
-    font-weight: 700;
+/* Trạng thái 2: Đã có trong danh mục -> Disabled, hiển thị 'Đã có' */
+.btn-save-item.is-saved,
+.btn-save-item:disabled {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--text-sub);
+    cursor: not-allowed;
+    opacity: 0.65;
 }
 
-.dropdown-divider {
-    height: 1px;
-    background: #e1ebf5;
+.btn-save-item.is-saved svg {
+    color: var(--success);
 }
 
-/* ---- Toggle switch ---- */
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 42px;
-    height: 22px;
+/* Trạng thái 3: Trống (chưa nhập tên hàng) */
+.btn-save-item.is-empty {
+    background: transparent;
+    border-color: transparent;
+    color: var(--text-sub);
+    opacity: 0.35;
+    cursor: not-allowed;
 }
 
-.switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.slider {
-    position: absolute;
-    inset: 0;
-    border-radius: 30px;
-    background: #c5d2df;
-    transition: 0.2s;
-    cursor: pointer;
-}
-
-.slider::before {
-    content: "";
-    position: absolute;
-    left: 3px;
-    top: 3px;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: #fff;
-    transition: 0.2s;
-}
-
-.switch input:checked + .slider {
-    background: #1f9d68;
-}
-
-.switch input:checked + .slider::before {
-    transform: translateX(20px);
-}
-
-/* ---- Quote number display ---- */
-#currentQuoteDisplay {
-    font-size: 14px;
-    font-weight: 700;
-    color: #0d5c92;
-}
-
-/* ---- Notification animation ---- */
-@keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to   { transform: translateX(0);    opacity: 1; }
-}
-
-@keyframes slideOut {
-    from { transform: translateX(0);    opacity: 1; }
-    to   { transform: translateX(100%); opacity: 0; }
-}

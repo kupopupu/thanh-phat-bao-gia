@@ -96,7 +96,7 @@ function generateFinalizeHTML() {
 
             <!-- Approval box -->
             <div style="background:#fff3cd;border:1px solid #ffc107;padding:12px;border-radius:8px;font-size:13px;">
-              <div style="font-weight:700;color:#e67e22;margin-bottom:6px;">⚠ LƯU Ý QUAN TRỌNG</div>
+              <div style="font-weight:700;color:#c05621;margin-bottom:6px;text-transform:uppercase;font-size:12px;letter-spacing:0.5px;">Lưu ý quan trọng</div>
               <div style="color:#666;line-height:1.5;">Vui lòng kiểm tra kỹ thông tin và hình ảnh trước khi xác nhận. Sau khi ký xác nhận, chúng tôi không chịu trách nhiệm về lỗi thiết kế.</div>
             </div>
           </div>

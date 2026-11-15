@@ -37,81 +37,101 @@ function openQuoteFormModal() {
  * Reset the form to a blank state and open the modal as a new quote.
  */
 function openNewQuoteModal() {
-    // Clear customer fields
-    ['customerName', 'customerPhone', 'customerAddress'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-    });
-    const codeEl = document.getElementById('customerCode');
-    if (codeEl) codeEl.value = '';
+    try {
+        // Clear customer fields
+        ['customerName', 'customerPhone', 'customerAddress'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        const codeEl = document.getElementById('customerCode');
+        if (codeEl) codeEl.value = '';
 
-    // Reset points display
-    if (typeof _updatePointsDisplay === 'function') _updatePointsDisplay('');
-    // Reset items table to one blank row
-    const tbody = document.getElementById('itemsBody');
-    if (tbody) {
-        tbody.innerHTML = `<tr>
-            <td>1</td>
-            <td class="product-name-cell"></td>
-            <td class="unit-cell"><input type="text" placeholder="Cái" onchange="updateRowTotal(this); handleUnitChange(this)"></td>
-            <td><input type="number" placeholder="1" min="0" step="1" onchange="updateRowTotal(this)"></td>
-            <td class="price-cell"></td>
-            <td class="discount-cell"></td>
-            <td class="row-total">0đ</td>
-            <td style="text-align:center;"><button class="remove-btn" onclick="removeRow(this)" disabled>Xóa</button></td>
-        </tr>`;
-        const row = tbody.querySelector('tr');
-        if (row) {
-            // Name cell with catalog dropdown
-            row.querySelector('.product-name-cell').appendChild(buildProductSelect());
-            // Setup price cell
-            const priceInp = document.createElement('input');
-            priceInp.type = 'text'; priceInp.placeholder = '.000đ'; priceInp.dataset.raw = '';
-            row.querySelector('.price-cell').appendChild(priceInp);
-            attachPriceBehavior(priceInp);
-            // Setup discount cell with negative display
-            const discInp = document.createElement('input');
-            discInp.type = 'text'; discInp.placeholder = '0đ'; discInp.dataset.raw = '';
-            discInp.dataset.negativeDisplay = '1';
-            discInp.classList.add('discount-input');
-            row.querySelector('.discount-cell').appendChild(discInp);
-            attachPriceBehavior(discInp);
-            attachRowListeners(row);
+        // Reset points display
+        if (typeof _updatePointsDisplay === 'function') _updatePointsDisplay('');
+
+        // Reset items table to one blank row
+        const tbody = document.getElementById('itemsBody');
+        if (tbody) {
+            tbody.innerHTML = `<tr>
+                <td style="text-align:center;color:var(--text-sub);">1</td>
+                <td class="product-name-cell"></td>
+                <td class="unit-cell"><input type="text" placeholder="Thùng" onchange="updateRowTotal(this); handleUnitChange(this)"></td>
+                <td><input type="number" placeholder="1" min="0" step="1" onchange="updateRowTotal(this)"></td>
+                <td class="price-cell"></td>
+                <td class="discount-cell"></td>
+                <td class="row-total">0đ</td>
+                <td style="text-align:center;">
+                    <button type="button" class="btn-save-item is-empty" disabled onclick="saveRowItemToCatalog(this)" title="Nhập tên hàng hóa để lưu">
+                        <span>Lưu SP</span>
+                    </button>
+                </td>
+                <td style="text-align:center;"><button class="remove-btn" onclick="removeRow(this)" disabled title="Xóa dòng">✕</button></td>
+            </tr>`;
+            const row = tbody.querySelector('tr');
+            if (row) {
+                // Name cell with catalog dropdown
+                if (typeof buildProductSelect === 'function') {
+                    row.querySelector('.product-name-cell').appendChild(buildProductSelect());
+                }
+                // Setup price cell
+                const priceInp = document.createElement('input');
+                priceInp.type = 'text'; priceInp.placeholder = '.000đ'; priceInp.dataset.raw = '';
+                row.querySelector('.price-cell').appendChild(priceInp);
+                if (typeof attachPriceBehavior === 'function') attachPriceBehavior(priceInp);
+
+                // Setup discount cell with negative display
+                const discInp = document.createElement('input');
+                discInp.type = 'text'; discInp.placeholder = '0đ'; discInp.dataset.raw = '';
+                discInp.dataset.negativeDisplay = '1';
+                discInp.classList.add('discount-input');
+                row.querySelector('.discount-cell').appendChild(discInp);
+                if (typeof attachPriceBehavior === 'function') attachPriceBehavior(discInp);
+                if (typeof attachRowListeners === 'function') attachRowListeners(row);
+                if (typeof updateRowSaveBtnStatus === 'function') updateRowSaveBtnStatus(row);
+            }
         }
+
+        // Reset summary fields
+        ['discount', 'vat'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = id === 'vat' ? '0' : '';
+        });
+        const pctInp = document.getElementById('depositPercent');
+        if (pctInp) pctInp.value = 40;
+        const depInp = document.getElementById('depositAmountInput');
+        if (depInp) { depInp.value = '0 VNĐ'; depInp.dataset.raw = 0; }
+        window._customDepositManual = false;
+        const depToggle = document.getElementById('depositToggle');
+        if (depToggle) {
+            depToggle.disabled = false;
+            depToggle.checked = false;
+        }
+        window.depositToggleLocked = false;
+        window.editingLockedDeposit = false;
+        window.editingDepositAmount = 0;
+        if (typeof toggleDepositDisabled === 'function') toggleDepositDisabled(false);
+
+        // Reset quote type to cup
+        if (typeof selectQuoteType === 'function') selectQuoteType('cup');
+
+        // New quote number
+        window.editingQuoteId = null;
+        if (typeof generateQuoteNumber === 'function') quoteNumber = generateQuoteNumber();
+        if (typeof updateQuoteDisplay === 'function') updateQuoteDisplay();
+        if (typeof updateSummary === 'function') updateSummary();
+
+        // Update modal title
+        const title = document.getElementById('quoteFormModalTitle');
+        if (title) title.textContent = 'Lập báo giá mới';
+        const finalizeBtn = document.getElementById('finalizeQuoteBtn');
+        if (finalizeBtn) finalizeBtn.textContent = 'Xác nhận hoàn tất';
+    } catch (err) {
+        console.error('Error resetting quote modal state:', err);
     }
-
-    // Reset summary fields
-    ['discount', 'vat'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = id === 'vat' ? '0' : '';
-    });
-    const depToggle = document.getElementById('depositToggle');
-    if (depToggle) {
-        depToggle.disabled = false;
-        depToggle.checked = false;
-    }
-    window.depositToggleLocked = false;
-    window.editingLockedDeposit = false;
-    window.editingDepositAmount = 0;
-    toggleDepositDisabled(false);
-
-    // Reset quote type to cup
-    if (typeof selectQuoteType === 'function') selectQuoteType('cup');
-
-    // New quote number
-    window.editingQuoteId = null;
-    quoteNumber = generateQuoteNumber();
-    updateQuoteDisplay();
-    updateSummary();
-
-    // Update modal title
-    const title = document.getElementById('quoteFormModalTitle');
-    if (title) title.textContent = '📝 Báo giá mới';
-    const finalizeBtn = document.getElementById('finalizeQuoteBtn');
-    if (finalizeBtn) finalizeBtn.textContent = '✅ Xác nhận đã xong BG';
 
     openQuoteFormModal();
 }
+window.openNewQuoteModal = openNewQuoteModal;
 
 /**
  * Close the quote form modal and refresh the dashboard.
@@ -234,6 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Render inline dashboard
     renderQuoteList('');
     renderDashboardStats();
+    if (typeof updateSidebarBadges === 'function') updateSidebarBadges();
 
     // Đồng bộ dữ liệu từ Neon (chỉ hoạt động khi chạy trên Vercel/server, silent khi offline)
     if (typeof initApiSync === 'function') initApiSync();

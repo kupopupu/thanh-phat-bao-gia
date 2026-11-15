@@ -1,0 +1,377 @@
+/* ==========================================================================
+   DARK.CSS  –  Chế Độ Tối (Midnight Navy & Pastel Sky) Đồng Bộ Thương Hiệu
+   ========================================================================== */
+
+html.dark-mode body,
+body.dark-mode {
+    --navy-950: #040b16;
+    --navy-900: #e6f2ff;
+    --navy-800: #bae0fd;
+    --navy-700: #7dd3fc;
+
+    --brand-blue: #1d75ae;
+    --accent: #38bdf8;
+
+    --bg-page: #06101e;
+    --bg-surface: #0b192c;
+    --bg-surface-hover: #112642;
+    --bg-muted: #081424;
+
+    --pastel-50: #10233b;
+    --pastel-100: #163050;
+    --pastel-200: #234975;
+    --pastel-300: #7dd3fc;
+    --sky-600: #7dd3fc;
+    --sky-500: #38bdf8;
+
+    --primary: #38bdf8;
+    --primary-hover: #7dd3fc;
+    --primary-light: #10233b;
+    --primary-soft: #163050;
+    --primary-border: #234975;
+
+    --text-main: #f0f7ff;
+    --text-secondary: #bae0fd;
+    --text-muted: #829ab1;
+    --text-sub: #627d98;
+
+    --border: #19324e;
+    --border-strong: #254b78;
+    --border-light: #12253b;
+
+    background: #06101e !important;
+    color: var(--text-main);
+}
+
+/* Scrollbar Dark */
+body.dark-mode ::-webkit-scrollbar-thumb {
+    background: #1e3a5f;
+}
+body.dark-mode ::-webkit-scrollbar-thumb:hover {
+    background: #2d5585;
+}
+
+/* ── Theme Toggle Button ─────────────────────────────────────────────────── */
+.theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    color: #ffffff;
+    padding: 5px 12px;
+    border-radius: var(--radius-md);
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.theme-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.24);
+}
+
+body.dark-mode .theme-toggle-btn {
+    background: #122640;
+    border-color: #254b78;
+    color: #7dd3fc;
+}
+
+body.dark-mode .theme-toggle-btn:hover {
+    background: #193456;
+    border-color: #7dd3fc;
+}
+
+/* ── Header & Sidebar Dark ───────────────────────────────────────────────── */
+body.dark-mode .header {
+    background: linear-gradient(100deg, #071324 0%, #0d2440 60%, #133963 100%);
+    border-color: #19324e;
+}
+
+body.dark-mode .sb-item {
+    color: #cbd5e1;
+    border-color: transparent;
+}
+
+body.dark-mode .sb-item .sb-icon {
+    color: #64748b;
+}
+
+body.dark-mode .sb-item:hover {
+    background: rgba(56, 189, 248, 0.09);
+    color: #f8fafc;
+    border-color: transparent;
+}
+
+body.dark-mode .sb-item:hover .sb-icon {
+    color: #38bdf8;
+}
+
+body.dark-mode .sb-item.active {
+    background: rgba(56, 189, 248, 0.16);
+    border-color: rgba(56, 189, 248, 0.25);
+    color: #38bdf8;
+    box-shadow: none;
+}
+
+body.dark-mode .sb-item.active .sb-icon {
+    color: #38bdf8;
+}
+
+body.dark-mode .sb-badge-pill {
+    background: rgba(14, 35, 60, 0.8);
+    border-color: rgba(56, 189, 248, 0.2);
+    color: #7dd3fc;
+}
+
+body.dark-mode .sb-item:hover .sb-badge-pill {
+    background: rgba(20, 50, 85, 0.9);
+    border-color: #38bdf8;
+    color: #ffffff;
+}
+
+body.dark-mode .sb-item.active .sb-badge-pill {
+    background: #0284c7;
+    border-color: #38bdf8;
+    color: #ffffff;
+}
+
+body.dark-mode .sb-footer {
+    border-top-color: #1a2f4c;
+}
+
+body.dark-mode .sb-footer-brand {
+    color: #f1f5f9;
+}
+
+body.dark-mode .sb-footer-sub {
+    color: #64748b;
+}
+
+/* ── Buttons & Titles Dark ───────────────────────────────────────────────── */
+body.dark-mode .dashboard-topbar h2,
+body.dark-mode .pl-title,
+body.dark-mode .cp-title,
+body.dark-mode .report-title,
+body.dark-mode .stat-card .stat-value,
+body.dark-mode .section-title,
+body.dark-mode .summary h3,
+body.dark-mode .summary-row span:last-child,
+body.dark-mode #remaining,
+body.dark-mode .com-box h4,
+body.dark-mode .ep-box h4,
+body.dark-mode .com-box .com-total {
+    color: #f0f7ff !important;
+}
+
+body.dark-mode .btn-primary,
+body.dark-mode .btn-success,
+body.dark-mode .btn-new-quote,
+body.dark-mode .com-btn-deposit,
+body.dark-mode .ep-btn-save {
+    background: #1d75ae;
+    border-color: #2b8ce0;
+    color: #ffffff;
+}
+
+body.dark-mode .btn-primary:hover,
+body.dark-mode .btn-success:hover,
+body.dark-mode .btn-new-quote:hover,
+body.dark-mode .com-btn-deposit:hover,
+body.dark-mode .ep-btn-save:hover {
+    background: #2b8ce0;
+    border-color: #38bdf8;
+}
+
+body.dark-mode .btn-secondary,
+body.dark-mode .cp-back-btn,
+body.dark-mode .com-btn-nodeposit,
+body.dark-mode .ep-btn-cancel {
+    background: #122640;
+    border-color: #254b78;
+    color: #bae0fd;
+}
+
+body.dark-mode .btn-secondary:hover,
+body.dark-mode .cp-back-btn:hover,
+body.dark-mode .com-btn-nodeposit:hover,
+body.dark-mode .ep-btn-cancel:hover {
+    background: #193456;
+    color: #ffffff;
+}
+
+body.dark-mode .filter-pill.active {
+    background: #1d75ae;
+    color: #ffffff;
+}
+
+/* ── Inputs Dark ─────────────────────────────────────────────────────────── */
+body.dark-mode input[type="text"],
+body.dark-mode input[type="tel"],
+body.dark-mode input[type="number"],
+body.dark-mode select {
+    background: #071120 !important;
+    border-color: #19324e !important;
+    color: #f0f7ff !important;
+}
+
+body.dark-mode input:focus,
+body.dark-mode select:focus {
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.16) !important;
+}
+
+/* ── Tables & Badges Dark ────────────────────────────────────────────────── */
+body.dark-mode .quote-list-table thead th,
+body.dark-mode .cp-table thead th,
+body.dark-mode .pl-table thead th,
+body.dark-mode .items-table th {
+    background: #10233b;
+    color: #bae0fd;
+    border-bottom-color: #19324e;
+}
+
+body.dark-mode .td-strong,
+body.dark-mode .items-table .row-total {
+    color: #f0f7ff;
+}
+
+body.dark-mode .badge-pending {
+    background: #0f1c2b;
+    color: #94a3b8;
+    border-color: #233b54;
+}
+body.dark-mode .badge-pending .badge-dot {
+    background: #94a3b8;
+    box-shadow: 0 0 0 1.5px #0f1c2b;
+}
+
+body.dark-mode .badge-no-deposit {
+    background: #20180b;
+    color: #fcd34d;
+    border-color: #78350f;
+}
+body.dark-mode .badge-no-deposit .badge-dot {
+    background: #f59e0b;
+    box-shadow: 0 0 0 1.5px #20180b;
+}
+
+body.dark-mode .badge-deposited {
+    background: #0c2136;
+    color: #7dd3fc;
+    border-color: #0369a1;
+}
+body.dark-mode .badge-deposited .badge-dot {
+    background: #38bdf8;
+    box-shadow: 0 0 0 1.5px #0c2136;
+}
+
+body.dark-mode .badge-completed {
+    background: #072517;
+    color: #86efac;
+    border-color: #065f46;
+}
+body.dark-mode .badge-completed .badge-dot {
+    background: #10b981;
+    box-shadow: 0 0 0 1.5px #072517;
+}
+
+body.dark-mode .qlt-btn {
+    background: #10233b;
+    border-color: #1e3a5f;
+    color: #bae0fd;
+}
+
+body.dark-mode .qlt-btn:hover:not(:disabled) {
+    background: #193456;
+    color: #ffffff;
+    border-color: #38bdf8;
+}
+
+body.dark-mode .qlt-btn-confirm,
+body.dark-mode .qlt-btn-fullpaid {
+    background: #163a5f;
+    color: #bae0fd;
+    border-color: #2b6cb0;
+}
+
+body.dark-mode .qlt-btn-confirm:hover:not(:disabled),
+body.dark-mode .qlt-btn-fullpaid:hover:not(:disabled) {
+    background: #1d75ae;
+    color: #ffffff;
+    border-color: #38bdf8;
+}
+
+body.dark-mode .ql-pg-btn {
+    background: #10233b;
+    border-color: #1e3a5f;
+    color: #bae0fd;
+}
+
+body.dark-mode .ql-pg-btn:hover:not(:disabled) {
+    background: #1d75ae;
+    color: #ffffff;
+}
+
+body.dark-mode .ql-pg-label,
+body.dark-mode .ql-pg-select,
+body.dark-mode .count-pill,
+body.dark-mode .pl-count,
+body.dark-mode .cp-count {
+    color: #bae0fd;
+}
+
+body.dark-mode .summary-total-box {
+    background: linear-gradient(100deg, #0d2440 0%, #164878 100%);
+    border: 1px solid #254b78;
+}
+
+/* Mã báo giá & Nhãn nổi bật ở chế độ Tối */
+body.dark-mode #currentQuoteDisplay {
+    color: #ffffff !important;
+    background: #133963 !important;
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
+}
+
+body.dark-mode .summary-total-box span:first-child {
+    color: #bae0fd !important;
+}
+
+body.dark-mode .td-code {
+    color: #38bdf8 !important;
+}
+
+/* Nút Lưu sản phẩm trong Dark Mode */
+body.dark-mode .btn-save-item.can-save {
+    background: rgba(2, 132, 199, 0.18);
+    border-color: rgba(56, 189, 248, 0.45);
+    color: #38bdf8;
+}
+
+body.dark-mode .btn-save-item.can-save:hover {
+    background: #0284c7;
+    border-color: #38bdf8;
+    color: #ffffff;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
+}
+
+body.dark-mode .btn-save-item.is-saved,
+body.dark-mode .btn-save-item:disabled {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: #19324e;
+    color: #829ab1;
+    opacity: 0.7;
+}
+
+body.dark-mode .btn-save-item.is-saved svg {
+    color: #34d399;
+}
+
+body.dark-mode .btn-save-item.is-empty {
+    background: transparent;
+    border-color: transparent;
+    color: #627d98;
+    opacity: 0.35;
+}
+

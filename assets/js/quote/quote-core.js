@@ -34,7 +34,7 @@ function finalizeQuoteNumber() {
         const phone   = (document.getElementById('customerPhone')?.value   || '').trim();
         const address = (document.getElementById('customerAddress')?.value || '').trim();
         if (!name || !phone || !address) {
-            showNotification('⚠️ Vui lòng nhập đủ Tên, Số điện thoại và Địa chỉ khách hàng!', 'error');
+            showNotification('Vui lòng nhập đủ Tên, Số điện thoại và Địa chỉ khách hàng.', 'error');
             return;
         }
         const rows = document.querySelectorAll('#itemsBody tr');
@@ -43,7 +43,7 @@ function finalizeQuoteNumber() {
             return nameInp && (nameInp.value || '').trim() !== '';
         });
         if (!hasProduct) {
-            showNotification('⚠️ Vui lòng nhập ít nhất 1 sản phẩm!', 'error');
+            showNotification('Vui lòng nhập ít nhất 1 sản phẩm.', 'error');
             return;
         }
         // ───────────────────────────────────────────────
@@ -53,7 +53,7 @@ function finalizeQuoteNumber() {
             quoteNumber = generateQuoteNumber();
             const disp = document.getElementById('currentQuoteDisplay');
             if (disp) disp.textContent = quoteNumber;
-            showNotification('✅ Đã lưu thay đổi cho báo giá: ' + assigned);
+            showNotification('Đã lưu thay đổi cho báo giá: ' + assigned);
             if (typeof closeQuoteFormModal === 'function') closeQuoteFormModal();
             if (typeof renderQuoteList     === 'function') renderQuoteList();
             if (typeof renderDashboardStats === 'function') renderDashboardStats();
@@ -71,10 +71,10 @@ function finalizeQuoteNumber() {
         if (btn) {
             btn.disabled = false;
             btn.style.opacity = '1';
-            btn.textContent = 'Xác nhận đã xong báo giá';
+            btn.textContent = 'Xác nhận hoàn tất';
         }
 
-        showNotification('✅ Đã lưu và cấp mã báo giá: ' + assigned);
+        showNotification('Đã lưu và cấp mã báo giá: ' + assigned);
         if (typeof closeQuoteFormModal  === 'function') closeQuoteFormModal();
         if (typeof renderQuoteList      === 'function') renderQuoteList();
         if (typeof renderDashboardStats === 'function') renderDashboardStats();
@@ -178,6 +178,7 @@ function saveCurrentQuote(optionalData) {
         if (depEl) depositAmount = depEl.dataset.raw ? parseInt(depEl.dataset.raw, 10) || 0
                                                      : parseInt((depEl.textContent || '0').replace(/[^\d]/g, ''), 10) || 0;
     } catch (e) { }
+    const depositPercent = parseFloat(document.getElementById('depositPercent')?.value || '40') || 40;
 
     // Preserve order/payment state when editing an existing saved quote
     const existingOrderStatus = existingQuote?.orderStatus || 'pending';
@@ -210,7 +211,7 @@ function saveCurrentQuote(optionalData) {
         id, customerCode, customerName, customerPhone, customerAddress,
         total, items, pointsUsed,
         vatPercent, quoteType,
-        depositDisabled: depositDisabledFlag, depositAmount,
+        depositDisabled: depositDisabledFlag, depositAmount, depositPercent,
         depositConfirmed: existingDepositConfirmed,
         paid: existingPaid,
         orderStatus: existingOrderStatus,
@@ -262,11 +263,13 @@ function saveCurrentQuote(optionalData) {
     if (savedQuotes.length > 200) savedQuotes.length = 200;
     persistSavedQuotes();
 
-    // Auto-save products/units/prices to the product catalog
+    // Đồng bộ sản phẩm vào danh mục: các sản phẩm đã có trong danh mục được cập nhật đơn giá/đvt mới nhất
     try {
         items.forEach(function(item) {
             if (item.name && item.name.trim() && item.price > 0) {
-                upsertProduct(item.name.trim(), item.unit || '', item.price);
+                if (typeof isProductInCatalog === 'function' && isProductInCatalog(item.name)) {
+                    upsertProduct(item.name.trim(), item.unit || '', item.price);
+                }
             }
         });
     } catch (e) { console.error('upsertProduct loop error', e); }
@@ -349,7 +352,7 @@ function saveCurrentQuote(optionalData) {
  * Sets window.editingQuoteId so that the next "Xác nhận" updates, not inserts.
  * @param {string} id
  */
-function loadQuoteIntoForm(id) {
+function loadQuoteIntoForm(id, silent = false) {
     try {
         loadSavedQuotes();
         const q = (savedQuotes || []).find(x => x.id === id);
@@ -416,6 +419,22 @@ function loadQuoteIntoForm(id) {
             window.editingDepositAmount  = 0;
         }
 
+        // Restore Deposit Inputs
+        const depInp = document.getElementById('depositAmountInput');
+        const pctInp = document.getElementById('depositPercent');
+        const depAmt = Number(q.depositAmount) || 0;
+        const totAmt = Number(q.total) || 0;
+        const depPct = q.depositPercent != null ? q.depositPercent : (totAmt > 0 && depAmt > 0 ? Math.round((depAmt / totAmt) * 100) : 40);
+
+        if (pctInp) pctInp.value = depPct;
+        if (depInp) {
+            depInp.value = formatCurrency(depAmt);
+            depInp.dataset.raw = depAmt;
+            depInp.disabled = isDisabled;
+        }
+        if (pctInp) pctInp.disabled = isDisabled;
+        window._customDepositManual = true;
+
         window._quoteExportCtx = {
             orderStatus: q.orderStatus || 'pending',
             depositAmount: Number(q.depositAmount) || 0,
@@ -430,14 +449,19 @@ function loadQuoteIntoForm(id) {
             const row = document.createElement('tr');
             rowCount++;
             row.innerHTML = `
-                <td>${rowCount}</td>
+                <td style="text-align:center;color:var(--text-sub);">${rowCount}</td>
                 <td class="product-name-cell"></td>
                 <td class="unit-cell"></td>
                 <td><input type="number" placeholder="1" min="0" step="0.01" onchange="updateRowTotal(this)"></td>
                 <td class="price-cell"></td>
                 <td class="discount-cell"></td>
-                <td class="row-total">0</td>
-                <td><button class="remove-btn" onclick="removeRow(this)">Xóa</button></td>
+                <td class="row-total">0đ</td>
+                <td style="text-align:center;">
+                    <button type="button" class="btn-save-item" onclick="saveRowItemToCatalog(this)">
+                        <span>Lưu SP</span>
+                    </button>
+                </td>
+                <td style="text-align:center;"><button class="remove-btn" onclick="removeRow(this)" title="Xóa dòng">✕</button></td>
             `;
             tbody.appendChild(row);
 
@@ -469,6 +493,8 @@ function loadQuoteIntoForm(id) {
             row.querySelector('.discount-cell').appendChild(discInp);
             attachPriceBehavior(discInp);
 
+            if (typeof attachRowListeners === 'function') attachRowListeners(row);
+            if (typeof updateRowSaveBtnStatus === 'function') updateRowSaveBtnStatus(row);
             updateRowTotal(priceInp);
         });
         // Re-apply points-redemption row if this saved quote had points used
@@ -485,9 +511,11 @@ function loadQuoteIntoForm(id) {
         updateSummary();
 
         const finalizeBtn = document.getElementById('finalizeQuoteBtn');
-        if (finalizeBtn) finalizeBtn.textContent = '💾 Lưu thay đổi báo giá';
+        if (finalizeBtn) finalizeBtn.textContent = 'Lưu thay đổi báo giá';
 
-        showNotification('📋 Đang chỉnh sửa báo giá: ' + q.id);
+        if (!silent) {
+            showNotification('Đang chỉnh sửa báo giá: ' + q.id);
+        }
     } catch (e) {
         console.error('loadQuoteIntoForm error', e);
         alert('Có lỗi khi tải báo giá.');

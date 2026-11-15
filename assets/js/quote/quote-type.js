@@ -25,8 +25,8 @@ function selectQuoteType(type) {
     const finalizeDropdownDivider = document.getElementById('finalizeDropdownDivider');
 
     if (type === 'cup') {
-        cupBtn.classList.add('active');
-        otherBtn.classList.remove('active');
+        if (cupBtn) cupBtn.classList.add('active');
+        if (otherBtn) otherBtn.classList.remove('active');
 
         quoteNumber = generateQuoteNumber();
 
@@ -35,8 +35,8 @@ function selectQuoteType(type) {
         if (finalizeDropdownDivider) finalizeDropdownDivider.style.display = 'block';
 
     } else {
-        otherBtn.classList.add('active');
-        cupBtn.classList.remove('active');
+        if (otherBtn) otherBtn.classList.add('active');
+        if (cupBtn) cupBtn.classList.remove('active');
 
         quoteNumber = generateQuoteNumber();
 
@@ -45,6 +45,6 @@ function selectQuoteType(type) {
         if (finalizeDropdownDivider) finalizeDropdownDivider.style.display = 'none';
     }
 
-    resetFormForQuoteType();
-    convertRowsForQuoteType();
+    if (typeof resetFormForQuoteType === 'function') resetFormForQuoteType();
+    if (typeof convertRowsForQuoteType === 'function') convertRowsForQuoteType();
 }
