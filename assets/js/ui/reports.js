@@ -73,9 +73,29 @@
         return { from: '', to: '', label: 'Toàn bộ thời gian' };
     }
 
-    function getFilteredQuotes() {
+    // ── Helper lấy toàn bộ danh sách báo giá an toàn (Đa tầng fallback) ──
+    function getAllQuotes() {
         if (typeof loadSavedQuotes === 'function') loadSavedQuotes();
-        const quotes = Array.isArray(window.savedQuotes) ? window.savedQuotes : [];
+        if (typeof savedQuotes !== 'undefined' && Array.isArray(savedQuotes) && savedQuotes.length > 0) {
+            window.savedQuotes = savedQuotes;
+            return savedQuotes;
+        }
+        if (typeof window !== 'undefined' && Array.isArray(window.savedQuotes) && window.savedQuotes.length > 0) {
+            return window.savedQuotes;
+        }
+        try {
+            const raw = localStorage.getItem('tp_saved_quotes_v1') || '[]';
+            const parsed = JSON.parse(raw) || [];
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                window.savedQuotes = parsed;
+                return parsed;
+            }
+        } catch (e) { }
+        return [];
+    }
+
+    function getFilteredQuotes() {
+        const quotes = getAllQuotes();
         const range = getFilterDateRange();
         if (!range.from || !range.to) return quotes;
 
@@ -256,8 +276,7 @@
 
     // ── Engine tính toán Xu hướng 12 tháng trong năm ──
     function computeMonthlyRevenue(year) {
-        if (typeof loadSavedQuotes === 'function') loadSavedQuotes();
-        const quotes = Array.isArray(window.savedQuotes) ? window.savedQuotes : [];
+        const quotes = getAllQuotes();
         const months = [];
         for (let m = 1; m <= 12; m++) {
             const mm = String(m).padStart(2, '0');
@@ -848,6 +867,9 @@
         if (!mainContent) return;
 
         const quotes = getFilteredQuotes();
+        if (quotes.length === 0 && typeof initApiSync === 'function') {
+            initApiSync();
+        }
         const kpis = computeKpis(quotes);
         const prodData = computeProductAnalytics(quotes);
         const custData = computeCustomerAnalytics(quotes);
@@ -933,8 +955,7 @@
     };
 
     window.showMonthlyDetails = function (monthKey) {
-        if (typeof loadSavedQuotes === 'function') loadSavedQuotes();
-        const quotes = Array.isArray(window.savedQuotes) ? window.savedQuotes : [];
+        const quotes = getAllQuotes();
         const rows = quotes.filter(q => ((q.savedAt || q.createdAt || '').slice(0, 7)) === monthKey);
         const ct = document.getElementById('monthlyDetails');
         if (!ct) return;
@@ -981,8 +1002,7 @@
     };
 
     window.viewCustomerDebtDetails = function (custKey) {
-        if (typeof loadSavedQuotes === 'function') loadSavedQuotes();
-        const quotes = Array.isArray(window.savedQuotes) ? window.savedQuotes : [];
+        const quotes = getAllQuotes();
         const debtQuotes = quotes.filter(q => {
             const key = (q.customerPhone || '').trim() || (q.customerName || '').trim();
             if (key !== custKey) return false;

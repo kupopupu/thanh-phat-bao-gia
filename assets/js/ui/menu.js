@@ -61,8 +61,10 @@ function updateSidebarBadges() {
     try {
         const qBadge = document.getElementById('sbBadgeQuotes');
         if (qBadge) {
-            const count = Array.isArray(window.savedQuotes) ? window.savedQuotes.length : 0;
-            qBadge.textContent = String(count);
+            const list = (typeof savedQuotes !== 'undefined' && Array.isArray(savedQuotes))
+                ? savedQuotes
+                : (Array.isArray(window.savedQuotes) ? window.savedQuotes : []);
+            qBadge.textContent = String(list.length);
         }
         const cBadge = document.getElementById('sbBadgeCustomers');
         if (cBadge) {
@@ -71,8 +73,10 @@ function updateSidebarBadges() {
         }
         const pBadge = document.getElementById('sbBadgeProducts');
         if (pBadge) {
-            const count = Array.isArray(window.savedProducts) ? window.savedProducts.length : 0;
-            pBadge.textContent = String(count);
+            const list = (typeof savedProducts !== 'undefined' && Array.isArray(savedProducts))
+                ? savedProducts
+                : (Array.isArray(window.savedProducts) ? window.savedProducts : []);
+            pBadge.textContent = String(list.length);
         }
     } catch (e) {
         console.warn('updateSidebarBadges error:', e);

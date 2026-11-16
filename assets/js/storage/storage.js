@@ -102,6 +102,7 @@ function loadSavedProducts() {
     } catch (e) {
         savedProducts = [];
     }
+    window.savedProducts = savedProducts;
 }
 
 let _productSyncTimer = null;
@@ -206,9 +207,16 @@ function _pullAndMergeQuotes() {
                 savedQuotes = Object.values(localMap)
                     .sort((a, b) => (b.savedAt || b.createdAt || '') > (a.savedAt || a.createdAt || '') ? 1 : -1)
                     .slice(0, 200);
+                window.savedQuotes = savedQuotes;
                 persistSavedQuotesLocalOnly();
                 if (typeof renderQuoteList     === 'function') renderQuoteList(document.getElementById('mainQuoteSearch')?.value || '');
                 if (typeof renderDashboardStats === 'function') renderDashboardStats();
+                if (typeof updateSidebarBadges === 'function') updateSidebarBadges();
+                if (typeof showRevenueAnalyticsHub === 'function' && document.getElementById('revHubContent')) {
+                    showRevenueAnalyticsHub();
+                }
+            } else {
+                window.savedQuotes = savedQuotes;
             }
         })
         .catch(function(e) { console.warn('[DB] pull quotes error:', e); });
@@ -265,9 +273,16 @@ function initApiSync() {
                 savedQuotes = Object.values(localMap)
                     .sort((a, b) => (b.savedAt || b.createdAt || '') > (a.savedAt || a.createdAt || '') ? 1 : -1)
                     .slice(0, 200);
+                window.savedQuotes = savedQuotes;
                 persistSavedQuotesLocalOnly();
                 if (typeof renderQuoteList     === 'function') renderQuoteList('');
                 if (typeof renderDashboardStats === 'function') renderDashboardStats();
+                if (typeof updateSidebarBadges === 'function') updateSidebarBadges();
+                if (typeof showRevenueAnalyticsHub === 'function' && document.getElementById('revHubContent')) {
+                    showRevenueAnalyticsHub();
+                }
+            } else {
+                window.savedQuotes = savedQuotes;
                 if (typeof updateSidebarBadges === 'function') updateSidebarBadges();
             }
         })
@@ -354,6 +369,7 @@ function loadSavedQuotes() {
     } catch (e) {
         savedQuotes = [];
     }
+    window.savedQuotes = savedQuotes;
 }
 
 /** Chỉ lưu localStorage — không gọi API (dùng nội bộ để tránh vòng lặp) */
@@ -413,6 +429,7 @@ function loadSavedCustomers() {
     } catch (e) {
         savedCustomers = {};
     }
+    window.savedCustomers = savedCustomers;
 }
 
 /** Chỉ lưu localStorage */

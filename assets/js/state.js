@@ -34,3 +34,7 @@ const SAVED_PRODUCTS_KEY  = 'tp_product_catalog_v1';
 let savedQuotes    = [];
 let savedCustomers = {};
 let savedProducts  = [];  // [{ name, unit, price, updatedAt }]
+
+window.savedQuotes    = savedQuotes;
+window.savedCustomers = savedCustomers;
+window.savedProducts  = savedProducts;
